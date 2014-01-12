@@ -13,8 +13,8 @@ class Terminal(GenericTerminal):
     add_timeslot = pyqtSignal(str)
     insert_plotline = pyqtSignal(int, str)
     insert_timeslot = pyqtSignal(int, str)
-    move_plotline = pyqtSignal(int, int)
-    move_timeslot = pyqtSignal(int, int)
+    move_plotline = pyqtSignal(int, str)
+    move_timeslot = pyqtSignal(int, str)
     remove_plotline = pyqtSignal(int)
     remove_timeslot = pyqtSignal(int)
 
@@ -57,13 +57,13 @@ class Terminal(GenericTerminal):
             self.insert_timeslot.emit(int(rx.group(2)), rx.group(3))
 
     def cmd_move(self, arg):
-        rx = re.match(r'([pt])(\d+) +(\d+|\+|-)', arg)
+        rx = re.match(r'([pt])([1-9]\d*) *( +[1-9]\d*|\+|-)', arg)
         if not rx:
             self.error('Invalid move command')
         elif rx.group(1) == 'p':
-            self.move_plotline.emit(int(rx.group(2)), rx.group(3))
+            self.move_plotline.emit(int(rx.group(2)), rx.group(3).strip())
         elif rx.group(1) == 't':
-            self.move_timeslot.emit(int(rx.group(2)), rx.group(3))
+            self.move_timeslot.emit(int(rx.group(2)), rx.group(3).strip())
 
     def cmd_remove(self, arg):
         rx = re.match(r'([pt])(\d+)', arg)
