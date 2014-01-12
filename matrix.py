@@ -66,6 +66,15 @@ class Matrix():
         for n in range(len(self.data)):
             del self.data[n][pos]
 
+    def move_row(self, oldpos, newpos):
+        row = self.data.pop(oldpos)
+        self.data.insert(newpos, row)
+
+    def move_column(self, oldpos, newpos):
+        for n in range(len(self.data)):
+            x = self.data[n].pop(oldpos)
+            self.data[n].insert(newpos, x)
+
     def row_items(self, pos):
         return [x[0] for x in self.data[pos]]
 

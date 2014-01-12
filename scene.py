@@ -32,7 +32,7 @@ class Scene(QtGui.QGraphicsScene):
         self.add_plotline('p2')
         self.add_timeslot('t2')
         self.add_timeslot('t3')
-        self.set_item(0,2, 'HAHAHAHAHAHA')
+        # self.set_item(0,2, 'HAHAHAHAHAHA')
         # self.add_event(1,1,'coooooo')
         # print(self.grid)
         self.add_timeslot('later')
@@ -43,6 +43,11 @@ class Scene(QtGui.QGraphicsScene):
         self.add_plotline('ELPha')
         self.insert_timeslot(1,'prolog')
         self.set_item(3,2,'wuh?\nnnnnn\nHAO')
+        self.remove_plotline(3)
+        self.move_timeslot(2,'-')
+        self.move_plotline(1,4)
+        # self.remove_timeslot(4)
+        # self.remove_timeslot(2)
 
 
     def add_plotline(self, name):
@@ -55,19 +60,57 @@ class Scene(QtGui.QGraphicsScene):
         self.column_widths.append(0)
         self.set_item(0, len(self.column_widths)-1, name)
 
-    def insert_plotline(self, pos, name):
-        if pos < 1:
-            pos = 1
-        self.grid.add_row(pos)
-        self.row_heights.insert(pos, 0)
-        self.set_item(pos, 0, name)
+    def insert_plotline(self, row, name):
+        assert row > 0
+        self.grid.add_row(row)
+        self.row_heights.insert(row, 0)
+        self.set_item(row, 0, name)
 
-    def insert_timeslot(self, pos, name):
-        if pos < 1:
-            pos = 1
-        self.grid.add_column(pos)
-        self.column_widths.insert(pos, 0)
-        self.set_item(0, pos, name)
+    def insert_timeslot(self, column, name):
+        assert column > 0
+        self.grid.add_column(column)
+        self.column_widths.insert(column, 0)
+        self.set_item(0, column, name)
+
+    def remove_plotline(self, row):
+        assert row > 0
+        for item in self.grid.row_items(row):
+            self.removeItem(item)
+        self.grid.remove_row(row)
+        del self.row_heights[row]
+        self.update_cell_pos()
+
+    def remove_timeslot(self, column):
+        assert column > 0
+        for item in self.grid.column_items(column):
+            self.removeItem(item)
+        self.grid.remove_column(column)
+        del self.column_widths[column]
+        self.update_cell_pos()
+
+    def fix_movepos(self, oldpos, newpos):
+        if newpos == '+':
+            newpos = oldpos + 2
+        elif newpos == '-':
+            newpos = max(oldpos-1, 1)
+        elif oldpos < newpos:
+            newpos -= 1
+        return oldpos, newpos
+
+    def move_plotline(self, oldpos, newpos):
+        oldpos, newpos = self.fix_movepos(oldpos, newpos)
+        self.grid.move_row(oldpos, newpos)
+        row = self.row_heights.pop(oldpos)
+        self.row_heights.insert(newpos, row)
+        self.update_cell_pos()
+
+    def move_timeslot(self, oldpos, newpos):
+        oldpos, newpos = self.fix_movepos(oldpos, newpos)
+        self.grid.move_column(oldpos, newpos)
+        column = self.column_widths.pop(oldpos)
+        self.column_widths.insert(newpos, column)
+        self.update_cell_pos()
+
 
     def set_item(self, row, column, text):
         size = self.fm.size(0, text)
