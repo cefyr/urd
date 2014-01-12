@@ -6,6 +6,7 @@ from PyQt4.QtCore import Qt
 from libsyntyche import common
 
 from scene import Scene
+from terminal import Terminal
 
 class MainWindow(QtGui.QFrame):
     def __init__(self):
@@ -15,28 +16,35 @@ class MainWindow(QtGui.QFrame):
         layout = QtGui.QVBoxLayout(self)
         common.kill_theming(layout)
 
-        scene = Scene()
+        self.scene = Scene()
 
-        view = QtGui.QGraphicsView(scene)
+        view = QtGui.QGraphicsView(self.scene)
         view.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         view.setStyleSheet('padding: 6px; background: #222; border: none;')
         layout.addWidget(view)
 
+        self.terminal = Terminal(self)
+        layout.addWidget(self.terminal)
+
+        connect_signals(self.scene, self.terminal)
+
         self.show()
 
-def create_scene():
-    scene = QtGui.QGraphicsScene()
-    scene.setBackgroundBrush(QtGui.QColor('#222'))
-
-
-
-    pen = QtGui.QPen(QtGui.QBrush(QtGui.QColor('red')), 10)
-    scene.addLine(0,20,100,20,pen)
-    scene.addLine(0,100,100,100,pen)
-    pen.setColor(QtGui.QColor('green'))
-    scene.addLine(50,0,50,150,pen)
-    return scene
-
+def connect_signals(scene, term):
+    connect = (
+        (term.add_plotline, scene.add_plotline),
+        (term.add_timeslot, scene.add_timeslot),
+        (term.insert_plotline, scene.insert_plotline),
+        (term.insert_timeslot, scene.insert_timeslot),
+        (term.move_plotline, scene.move_plotline),
+        (term.move_timeslot, scene.move_timeslot),
+        (term.remove_plotline, scene.remove_plotline),
+        (term.remove_timeslot, scene.remove_timeslot),
+        (scene.error, term.error),
+        (scene.print_, term.print_)
+    )
+    for signal, slot in connect:
+        signal.connect(slot)
 
 
 def main():

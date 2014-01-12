@@ -13,7 +13,7 @@ class Scene(QtGui.QGraphicsScene):
 
     def __init__(self):
         super().__init__()
-        self.horizontal_time = True
+        self.horizontal_time = False
 
         self.setBackgroundBrush(QColor('#222'))
         self.row_heights = [0]
@@ -42,24 +42,24 @@ class Scene(QtGui.QGraphicsScene):
         # Debug
         self.add_plotline('p1')
         self.add_timeslot('t1123456')
-        self.add_plotline('p2')
-        self.add_timeslot('t2')
-        self.add_timeslot('t3')
-        # self.set_item(0,2, 'HAHAHAHAHAHA')
-        # self.add_event(1,1,'coooooo')
-        # print(self.grid)
-        self.add_timeslot('later')
-        # self.add_event(0,1,'bam bam')
-        self.add_plotline('Jensen')
-        self.add_timeslot('the\nend')
-        self.set_item(1,1,'winner')
-        self.add_plotline('ELPha')
-        self.insert_timeslot(1,'prolog')
-        self.set_item(2,3,'wuh?\nnnnnn\nHAO')
-        self.remove_plotline(3)
-        # self.move_timeslot(2,'-')
-        # self.move_plotline(1,4)
-        self.set_item(2,3, 'det var en gång\ntvå små skurkar')
+        # self.add_plotline('p2')
+        # self.add_timeslot('t2')
+        # self.add_timeslot('t3')
+        # # self.set_item(0,2, 'HAHAHAHAHAHA')
+        # # self.add_event(1,1,'coooooo')
+        # # print(self.grid)
+        # self.add_timeslot('later')
+        # # self.add_event(0,1,'bam bam')
+        # self.add_plotline('Jensen')
+        # self.add_timeslot('the\nend')
+        # self.set_item(1,1,'winner')
+        # self.add_plotline('ELPha')
+        # self.insert_timeslot(1,'prolog')
+        # self.set_item(2,3,'wuh?\nnnnnn\nHAO')
+        # self.remove_plotline(3)
+        # # self.move_timeslot(2,'-')
+        # # self.move_plotline(1,4)
+        # self.set_item(2,3, 'det var en gång\ntvå små skurkar')
         # self.remove_timeslot(4)
         # self.remove_timeslot(2)
 
@@ -137,8 +137,9 @@ class Scene(QtGui.QGraphicsScene):
 
     # ==== REMOVE ====================================================
     def remove_plotline(self, pos):
-        self.removeItem(self.plotline_lines[pos])
-        del self.plotline_lines[pos]
+        if pos in range(len(self.plotline_lines)):
+            self.removeItem(self.plotline_lines[pos])
+            del self.plotline_lines[pos]
         if self.horizontal_time:
             self.remove_row(pos)
         else:
@@ -151,7 +152,9 @@ class Scene(QtGui.QGraphicsScene):
             self.remove_row(pos)
 
     def remove_row(self, row):
-        assert row > 0
+        if not row in range(self.grid.count_rows()):
+            self.error.emit('Row doesn\'t exist')
+            return
         for item in self.grid.row_items(row):
             item.remove()
         self.grid.remove_row(row)
@@ -161,7 +164,9 @@ class Scene(QtGui.QGraphicsScene):
         self.update_plotline_lines()
 
     def remove_column(self, column):
-        assert column > 0
+        if not column in range(self.grid.count_columns()):
+            self.error.emit('Column doesn\'t exist')
+            return
         for item in self.grid.column_items(column):
             item.remove()
         self.grid.remove_column(column)
@@ -189,8 +194,8 @@ class Scene(QtGui.QGraphicsScene):
             newpos = oldpos + 2
         elif newpos == '-':
             newpos = max(oldpos-1, 1)
-        elif oldpos < newpos:
-            newpos -= 1
+        elif oldpos < int(newpos):
+            newpos = int(newpos) - 1
         return oldpos, newpos
 
     def move_row(self, oldpos, newpos):
@@ -210,6 +215,7 @@ class Scene(QtGui.QGraphicsScene):
 
 
     def set_item(self, row, column, text, header=False):
+        text = text.replace('\\n', '\n')
         if header:
             size = self.header_fm.size(0, text)
         else:
