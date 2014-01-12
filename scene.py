@@ -64,26 +64,25 @@ class Scene(QtGui.QGraphicsScene):
         # self.remove_timeslot(4)
         # self.remove_timeslot(2)
 
-    def add_plotline_line(self, pos):
-        pen = QPen(QBrush(QColor('#444')), 5, cap=Qt.RoundCap)
+    def set_plotline_line_pos(self, line, pos):
         if self.horizontal_time:
             y = sum(self.row_heights[:pos]) + self.row_heights[pos]/2 - self.rowpadding/2
-            line = self.addLine(self.column_widths[0],y,sum(self.column_widths),y, pen)
+            line.setLine(self.column_widths[0], y, sum(self.column_widths), y)
         else:
             x = sum(self.column_widths[:pos]) + self.column_widths[pos]/2 - self.colpadding/2
-            line = self.addLine(x,self.row_heights[0],x,sum(self.row_heights), pen)
+            line.setLine(x, self.row_heights[0], x, sum(self.row_heights))
+
+    def add_plotline_line(self, pos):
+        pen = QPen(QBrush(QColor('#444')), 5, cap=Qt.RoundCap)
+        line = self.addLine(0,0,0,0,pen)
+        self.set_plotline_line_pos(line, pos)
         line.setZValue(-10)
         self.plotline_lines.insert(pos, line)
 
     def update_plotline_lines(self):
         for n, line in enumerate(self.plotline_lines):
             if line is None: continue
-            if self.horizontal_time:
-                y = sum(self.row_heights[:n]) + self.row_heights[n]/2 - self.rowpadding/2
-                line.setLine(self.column_widths[0],y,sum(self.column_widths),y)
-            else:
-                x = sum(self.column_widths[:n]) + self.column_widths[n]/2 - self.colpadding/2
-                line.setLine(x,self.row_heights[0],x,sum(self.row_heights))
+            self.set_plotline_line_pos(line, n)
 
     # ==== ADD =======================================================
     def add_plotline(self, name):
