@@ -19,7 +19,7 @@ class MainWindow(QtGui.QFrame):
 
         view = QtGui.QGraphicsView(scene)
         view.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        view.setStyleSheet('border: 0px')
+        view.setStyleSheet('padding: 6px; background: #222; border: none;')
         layout.addWidget(view)
 
         self.show()
