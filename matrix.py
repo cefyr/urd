@@ -14,17 +14,21 @@ class Matrix():
     def __str__(self):
         return '\n'.join('\t|\t'.join(x[0].text() for x in row) for row in self.data)
 
+    def size(self):
+        return ('rows', len(self.data), 'cols', len(self.data[0]))
+
     def default_item(self):
         item = QtGui.QGraphicsSimpleTextItem(scene=self.scene)
         item.setFont(self.item_font)
         item.setBrush(self.item_brush)
+        item.hide()
         return (item, QtCore.QSizeF(0,0))
 
-    def pad_row(self, data):
-        data.extend([self.default_item()]*(len(self.data[0])-len(data)))
+    # def pad_row(self, data):
+    #     data.extend([self.default_item()]*(len(self.data[0])-len(data)))
 
-    def pad_column(self, data):
-        data.extend([self.default_item()]*(len(self.data)-len(data)))
+    # def pad_column(self, data):
+    #     data.extend([self.default_item()]*(len(self.data)-len(data)))
 
     def count_rows(self):
         return len(self.data)
@@ -32,23 +36,28 @@ class Matrix():
     def count_columns(self):
         return len(self.data[0])
 
-    def add_row(self, data):
-        self.pad_row(data)
-        self.data.append(data)
+    def add_row(self, pos=-1):
+        data = [self.default_item() for _ in range(len(self.data[0]))]
+        if pos == -1:
+            self.data.append(data)
+        else:
+            self.data.insert(pos, data)
 
-    def add_column(self, data):
-        self.pad_column(data)
+    def add_column(self, pos=-1):
         for n in range(len(self.data)):
-            self.data[n].append(data[n])
+            if pos == -1:
+                self.data[n].append(self.default_item())
+            else:
+                self.data[n].insert(pos, self.default_item())
 
-    def insert_row(self, pos, data):
-        self.pad_row(data)
-        self.data.insert(pos, data)
+    # def insert_row(self, pos, data):
+    #     self.pad_row(data)
+    #     self.data.insert(pos, data)
 
-    def insert_column(self, pos, data):
-        self.pad_column(data)
-        for n in range(len(self.data)):
-            self.data[n].insert(pos, data[n])
+    # def insert_column(self, pos, data):
+    #     self.pad_column(data)
+    #     for n in range(len(self.data)):
+    #         self.data[n].insert(pos, data[n])
 
     def remove_row(self, pos):
         del self.data[pos]
@@ -79,4 +88,10 @@ class Matrix():
         item = self.data[row][column]
         item[0].setText(text)
         item[0].setPos(x,y)
+        item[0].show()
         item[1].scale(size, QtCore.Qt.IgnoreAspectRatio)
+
+    def clear_item(self, row, column):
+        item = self.data[row][column]
+        item[0].hide()
+        item[1].scale(0, 0, QtCore.Qt.IgnoreAspectRatio)
