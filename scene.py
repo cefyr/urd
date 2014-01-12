@@ -13,6 +13,8 @@ class Scene(QtGui.QGraphicsScene):
 
     def __init__(self):
         super().__init__()
+        self.horizontal_time = True
+
         self.setBackgroundBrush(QColor('#222'))
         self.row_heights = [0]
         self.column_widths = [0]
@@ -53,7 +55,7 @@ class Scene(QtGui.QGraphicsScene):
         self.set_item(1,1,'winner')
         self.add_plotline('ELPha')
         self.insert_timeslot(1,'prolog')
-        self.set_item(3,2,'wuh?\nnnnnn\nHAO')
+        self.set_item(2,3,'wuh?\nnnnnn\nHAO')
         self.remove_plotline(3)
         # self.move_timeslot(2,'-')
         # self.move_plotline(1,4)
@@ -61,56 +63,104 @@ class Scene(QtGui.QGraphicsScene):
         # self.remove_timeslot(4)
         # self.remove_timeslot(2)
 
-    def add_plotline_line(self, row):
-        y = sum(self.row_heights[:row]) + self.row_heights[row]/2 - self.rowpadding/2
+    def add_plotline_line(self, pos):
         pen = QPen(QBrush(QColor('#444')), 5, cap=Qt.RoundCap)
-        line = self.addLine(self.column_widths[0],y,sum(self.column_widths),y, pen)
+        if self.horizontal_time:
+            y = sum(self.row_heights[:pos]) + self.row_heights[pos]/2 - self.rowpadding/2
+            line = self.addLine(self.column_widths[0],y,sum(self.column_widths),y, pen)
+        else:
+            x = sum(self.column_widths[:pos]) + self.column_widths[pos]/2 - self.colpadding/2
+            line = self.addLine(x,self.row_heights[0],x,sum(self.row_heights), pen)
         line.setZValue(-10)
-        self.plotline_lines.insert(row, line)
+        self.plotline_lines.insert(pos, line)
 
     def update_plotline_lines(self):
         for n, line in enumerate(self.plotline_lines):
             if line is None: continue
-            y = sum(self.row_heights[:n]) + self.row_heights[n]/2 - self.rowpadding/2
-            line.setLine(self.column_widths[0],y,sum(self.column_widths),y)
+            if self.horizontal_time:
+                y = sum(self.row_heights[:n]) + self.row_heights[n]/2 - self.rowpadding/2
+                line.setLine(self.column_widths[0],y,sum(self.column_widths),y)
+            else:
+                x = sum(self.column_widths[:n]) + self.column_widths[n]/2 - self.colpadding/2
+                line.setLine(x,self.row_heights[0],x,sum(self.row_heights))
 
-
+    # ==== ADD =======================================================
     def add_plotline(self, name):
+        if self.horizontal_time:
+            self.add_row(name)
+            self.add_plotline_line(len(self.row_heights)-1)
+        else:
+            self.add_column(name)
+            self.add_plotline_line(len(self.column_widths)-1)
+
+    def add_timeslot(self, name):
+        if self.horizontal_time:
+            self.add_column(name)
+        else:
+            self.add_row(name)
+
+    def add_row(self, name):
         self.grid.add_row()
         self.row_heights.append(0)
         self.set_item(len(self.row_heights)-1, 0, name, header=True)
-        self.add_plotline_line(len(self.row_heights)-1)
 
-    def add_timeslot(self, name):
+    def add_column(self, name):
         self.grid.add_column()
         self.column_widths.append(0)
         self.set_item(0, len(self.column_widths)-1, name, header=True)
 
-    def insert_plotline(self, row, name):
+    # ==== INSERT ====================================================
+    def insert_plotline(self, pos, name):
+        if self.horizontal_time:
+            self.insert_row(pos, name)
+        else:
+            self.insert_column(pos, name)
+        self.add_plotline_line(pos)
+
+    def insert_timeslot(self, pos, name):
+        if self.horizontal_time:
+            self.insert_column(pos, name)
+        else:
+            self.insert_row(pos, name)
+
+    def insert_row(self, row, name):
         assert row > 0
         self.grid.add_row(row)
         self.row_heights.insert(row, 0)
         self.set_item(row, 0, name, header=True)
 
-    def insert_timeslot(self, column, name):
+    def insert_column(self, column, name):
         assert column > 0
         self.grid.add_column(column)
         self.column_widths.insert(column, 0)
         self.set_item(0, column, name, header=True)
 
-    def remove_plotline(self, row):
+    # ==== REMOVE ====================================================
+    def remove_plotline(self, pos):
+        self.removeItem(self.plotline_lines[pos])
+        del self.plotline_lines[pos]
+        if self.horizontal_time:
+            self.remove_row(pos)
+        else:
+            self.remove_column(pos)
+
+    def remove_timeslot(self, pos):
+        if self.horizontal_time:
+            self.remove_column(pos)
+        else:
+            self.remove_row(pos)
+
+    def remove_row(self, row):
         assert row > 0
         for item in self.grid.row_items(row):
             item.remove()
         self.grid.remove_row(row)
         del self.row_heights[row]
-        self.removeItem(self.plotline_lines[row])
-        del self.plotline_lines[row]
         self.update_cell_pos()
         self.update_lines()
         self.update_plotline_lines()
 
-    def remove_timeslot(self, column):
+    def remove_column(self, column):
         assert column > 0
         for item in self.grid.column_items(column):
             item.remove()
@@ -119,6 +169,20 @@ class Scene(QtGui.QGraphicsScene):
         self.update_cell_pos()
         self.update_lines()
         self.update_plotline_lines()
+
+    # ==== MOVE ======================================================
+    def move_plotline(self, oldpos, newpos):
+        if self.horizontal_time:
+            self.move_row(oldpos, newpos)
+        else:
+            self.move_column(oldpos, newpos)
+        self.update_plotline_lines()
+
+    def move_timeslot(self, oldpos, newpos):
+        if self.horizontal_time:
+            self.move_column(oldpos, newpos)
+        else:
+            self.move_row(oldpos, newpos)
 
     def fix_movepos(self, oldpos, newpos):
         if newpos == '+':
@@ -129,20 +193,21 @@ class Scene(QtGui.QGraphicsScene):
             newpos -= 1
         return oldpos, newpos
 
-    def move_plotline(self, oldpos, newpos):
+    def move_row(self, oldpos, newpos):
         oldpos, newpos = self.fix_movepos(oldpos, newpos)
         self.grid.move_row(oldpos, newpos)
         row = self.row_heights.pop(oldpos)
         self.row_heights.insert(newpos, row)
         self.update_cell_pos()
-        self.update_plotline_lines()
 
-    def move_timeslot(self, oldpos, newpos):
+    def move_column(self, oldpos, newpos):
         oldpos, newpos = self.fix_movepos(oldpos, newpos)
         self.grid.move_column(oldpos, newpos)
         column = self.column_widths.pop(oldpos)
         self.column_widths.insert(newpos, column)
         self.update_cell_pos()
+
+
 
     def set_item(self, row, column, text, header=False):
         if header:
