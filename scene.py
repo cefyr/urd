@@ -43,27 +43,10 @@ class Scene(QtGui.QGraphicsScene):
         # Debug
         self.add_plotline('p1')
         self.add_timeslot('t1123456')
-        # self.add_plotline('p2')
         self.add_timeslot('t2')
         self.add_timeslot('t3')
-        # # self.set_item(0,2, 'HAHAHAHAHAHA')
-        # # self.add_event(1,1,'coooooo')
-        # # print(self.grid)
         self.add_timeslot('later')
-        # # self.add_event(0,1,'bam bam')
-        # self.add_plotline('Jensen')
         self.add_timeslot('the\nend')
-        # self.set_item(1,1,'winner')
-        # self.add_plotline('ELPha')
-        # self.insert_timeslot(1,'prolog')
-        # self.set_item(2,3,'wuh?\nnnnnn\nHAO')
-        # self.remove_plotline(3)
-        self.move_timeslot(5,1)
-        self.move_timeslot(5,1)
-        # # self.move_plotline(1,4)
-        # self.set_item(2,3, 'det var en gång\ntvå små skurkar')
-        # self.remove_timeslot(4)
-        # self.remove_timeslot(2)
 
 
 

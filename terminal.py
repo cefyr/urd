@@ -25,11 +25,11 @@ class Terminal(GenericTerminal):
         self.commands = {
             '?': (self.cmd_help, 'List commands or help for [command]'),
             'a': (self.cmd_add, 'Add plotline/timeslot (a[pt][NAME])'),
-            'i': (self.cmd_insert, 'Insert plotline/timeslot (a[pt][POS] [NAME])'),
-            'm': (self.cmd_move, 'Move plotline/timeslot (a[pt][OLDPOS] [NEWPOS])'),
-            'r': (self.cmd_remove, 'Remove plotline/timeslot (a[pt][POS])'),
+            'i': (self.cmd_insert, 'Insert plotline/timeslot (i[pt][POS] [NAME])'),
+            'm': (self.cmd_move, 'Move plotline/timeslot (m[pt][OLDPOS] [NEWPOS])'),
+            'r': (self.cmd_remove, 'Remove plotline/timeslot (r[pt][POS])'),
             'e': (self.cmd_edit, 'Edit cell'),
-            'q': (self.cmd_quit, 'Quit Kalpana')
+            'q': (self.cmd_quit, 'Quit')
         }
 
 
@@ -40,7 +40,7 @@ class Terminal(GenericTerminal):
         name = arg[1:].strip()
         if not name:
             self.error('No name provided')
-        if arg.startswith('p'):
+        elif arg.startswith('p'):
             self.add_plotline.emit(name)
         elif arg.startswith('t'):
             self.add_timeslot.emit(name)
