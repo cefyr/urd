@@ -9,7 +9,7 @@ from matrix import Matrix
 
 class Scene(QtGui.QGraphicsScene):
     print_ = pyqtSignal(str)
-    error = pyqtSignal(str)
+    error_sig = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -65,6 +65,10 @@ class Scene(QtGui.QGraphicsScene):
         # self.remove_timeslot(4)
         # self.remove_timeslot(2)
 
+
+
+    # ====== CONVENIENCE FUNCTIONS ===================================
+
     def _coord(self, arr, padding, pos):
         return self.border + sum(arr[:pos]) + arr[pos]/2 - padding/2
 
@@ -73,6 +77,9 @@ class Scene(QtGui.QGraphicsScene):
 
     def col_x(self, col):
         return self._coord(self.column_widths, self.colpadding, col)
+
+    def error(self, text):
+        self.error_sig.emit(text)
 
 
     # ==== ADD =======================================================
@@ -145,7 +152,7 @@ class Scene(QtGui.QGraphicsScene):
 
     def remove_row(self, row):
         if not row in range(self.grid.count_rows()):
-            self.error.emit('Row doesn\'t exist')
+            self.error('Row doesn\'t exist')
             return
         for item in self.grid.row_items(row):
             item.remove()
@@ -158,7 +165,7 @@ class Scene(QtGui.QGraphicsScene):
 
     def remove_column(self, column):
         if not column in range(self.grid.count_columns()):
-            self.error.emit('Column doesn\'t exist')
+            self.error('Column doesn\'t exist')
             return
         for item in self.grid.column_items(column):
             item.remove()
@@ -196,7 +203,7 @@ class Scene(QtGui.QGraphicsScene):
 
     def move_row(self, oldpos, newpos):
         if not oldpos in range(1, self.grid.count_rows()):
-            self.error.emit('Row doesn\'t exist')
+            self.error('Row doesn\'t exist')
             return
         oldpos, newpos = self._fix_movepos(oldpos, newpos)
         self.grid.move_row(oldpos, newpos)
@@ -207,7 +214,7 @@ class Scene(QtGui.QGraphicsScene):
 
     def move_column(self, oldpos, newpos):
         if not oldpos in range(1, self.grid.count_columns()):
-            self.error.emit('Column doesn\'t exist')
+            self.error('Column doesn\'t exist')
             return
         oldpos, newpos = self._fix_movepos(oldpos, newpos)
         self.grid.move_column(oldpos, newpos)

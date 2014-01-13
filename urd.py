@@ -40,7 +40,7 @@ def connect_signals(scene, term):
         (term.move_timeslot, scene.move_timeslot),
         (term.remove_plotline, scene.remove_plotline),
         (term.remove_timeslot, scene.remove_timeslot),
-        (scene.error, term.error),
+        (scene.error_sig, term.error),
         (scene.print_, term.print_)
     )
     for signal, slot in connect:
