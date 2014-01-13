@@ -20,7 +20,7 @@ class MainWindow(QtGui.QFrame):
 
         view = QtGui.QGraphicsView(self.scene)
         view.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        view.setStyleSheet('padding: 6px; background: #222; border: none;')
+        view.setStyleSheet('border: none;')
         layout.addWidget(view)
 
         self.terminal = Terminal(self)

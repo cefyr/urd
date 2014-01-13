@@ -20,6 +20,7 @@ class Scene(QtGui.QGraphicsScene):
         self.column_widths = [0]
         self.colpadding = 16
         self.rowpadding = 8
+        self.border = 20
 
         self.brush = QBrush(QColor('#222'))
 
@@ -64,13 +65,22 @@ class Scene(QtGui.QGraphicsScene):
         # self.remove_timeslot(4)
         # self.remove_timeslot(2)
 
+    def _coord(self, arr, padding, pos):
+        return self.border + sum(arr[:pos]) + arr[pos]/2 - padding/2
+
+    def row_y(self, row):
+        return self._coord(self.row_heights, self.rowpadding, row)
+
+    def col_x(self, col):
+        return self._coord(self.column_widths, self.colpadding, col)
+
     def set_plotline_line_pos(self, line, pos):
         if self.horizontal_time:
-            y = sum(self.row_heights[:pos]) + self.row_heights[pos]/2 - self.rowpadding/2
-            line.setLine(self.column_widths[0], y, sum(self.column_widths), y)
+            y = self.row_y(pos)
+            line.setLine(self.border+self.column_widths[0], y, self.border+sum(self.column_widths), y)
         else:
-            x = sum(self.column_widths[:pos]) + self.column_widths[pos]/2 - self.colpadding/2
-            line.setLine(x, self.row_heights[0], x, sum(self.row_heights))
+            x = self.col_x(pos)
+            line.setLine(x, self.border+self.row_heights[0], x, self.border+sum(self.row_heights))
 
     def add_plotline_line(self, pos):
         pen = QPen(QBrush(QColor('#444')), 5, cap=Qt.RoundCap)
@@ -220,8 +230,8 @@ class Scene(QtGui.QGraphicsScene):
             size = self.header_fm.size(0, text)
         else:
             size = self.fm.size(0, text)
-        x = sum(self.column_widths[:column])
-        y = sum(self.row_heights[:row])
+        x = self.border + sum(self.column_widths[:column])
+        y = self.border + sum(self.row_heights[:row])
         if header:
             font = self.header_font
         else:
@@ -238,18 +248,16 @@ class Scene(QtGui.QGraphicsScene):
         self.update_lines()
 
     def update_lines(self):
-        hy = self.row_heights[0] - self.rowpadding/2
-        vx = self.column_widths[0] - self.colpadding/2
-        self.hline.setLine(0,hy,sum(self.column_widths),hy)
-        self.vline.setLine(vx,0,vx,sum(self.row_heights))
+        hy = self.border + self.row_heights[0] - self.rowpadding/2
+        vx = self.border + self.column_widths[0] - self.colpadding/2
+        self.hline.setLine(0,hy,self.border + sum(self.column_widths),hy)
+        self.vline.setLine(vx,0,vx,self.border + sum(self.row_heights))
 
     def update_cell_pos(self):
         for r in range(self.grid.count_rows()):
             for c in range(self.grid.count_columns()):
                 item = self.grid.item(r,c)
-                x = sum(self.column_widths[:c]) + self.column_widths[c]/2 - self.colpadding/2
-                y = sum(self.row_heights[:r]) + self.row_heights[r]/2 - self.rowpadding/2
-                item.set_pos(x,y)
+                item.set_pos(self.col_x(c), self.row_y(r))
 
 
 if __name__ == '__main__':
