@@ -103,7 +103,7 @@ class Scene(QtGui.QGraphicsScene):
             row = len(self.row_heights)
         self.grid.add_row(row)
         self.row_heights.insert(row, 0)
-        self.set_item(row, 0, name, header=True)
+        self.set_cell(row, 0, name, header=True)
         self.add_row_number()
 
     def insert_column(self, column, name, append=False):
@@ -112,7 +112,7 @@ class Scene(QtGui.QGraphicsScene):
             column = len(self.column_widths)
         self.grid.add_column(column)
         self.column_widths.insert(column, 0)
-        self.set_item(0, column, name, header=True)
+        self.set_cell(0, column, name, header=True)
         self.add_column_number()
 
 
@@ -207,9 +207,9 @@ class Scene(QtGui.QGraphicsScene):
         self.update_numbers()
 
 
-    # ==== SET ITEM ==================================================
+    # ======= CELL HANDLING =============================================
 
-    def set_item(self, row, column, text, header=False):
+    def set_cell(self, row, column, text, header=False):
         text = text.replace('\\n', '\n')
         if header:
             size = self.header_fm.size(0, text)
@@ -228,8 +228,6 @@ class Scene(QtGui.QGraphicsScene):
         self.update_plotline_lines()
         self.update_numbers()
 
-
-    # ======= CELL HANDLING =============================================
 
     def update_cell_size(self, row, column):
         self.row_heights[row] = max(x.height() for x in self.grid.row_items(row)) + self.rowpadding
