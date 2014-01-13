@@ -10,6 +10,7 @@ from matrix import Matrix
 class Scene(QtGui.QGraphicsScene):
     print_ = pyqtSignal(str)
     error_sig = pyqtSignal(str)
+    prompt_sig = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -60,6 +61,9 @@ class Scene(QtGui.QGraphicsScene):
 
     def col_x(self, col):
         return self._coord(self.column_widths, self.colpadding, col)
+
+    def prompt(self, text):
+        self.prompt_sig.emit(text)
 
     def error(self, text):
         self.error_sig.emit(text)
@@ -208,6 +212,25 @@ class Scene(QtGui.QGraphicsScene):
 
 
     # ======= CELL HANDLING =============================================
+
+    def edit_cell(self, column, row, text): # yes, that's the correct order
+        if column not in range(self.grid.count_columns()):
+            self.error('Column doesn\'t exist')
+        elif row not in range(self.grid.count_rows()):
+            self.error('Row doesn\'t exist')
+        elif not text:
+            oldtext = self.grid.item(row, column).text()
+            self.prompt('e{} {} {}'.format(column, row, oldtext))
+        else:
+            self.set_cell(row, column, text)
+
+    def clear_cell(self, column, row):
+        if column not in range(self.grid.count_columns()):
+            self.error('Column doesn\'t exist')
+        elif row not in range(self.grid.count_rows()):
+            self.error('Row doesn\'t exist')
+        else:
+            self.grid.clear_item(row, column)
 
     def set_cell(self, row, column, text, header=False):
         text = text.replace('\\n', '\n')

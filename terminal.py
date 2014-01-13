@@ -17,6 +17,8 @@ class Terminal(GenericTerminal):
     move_timeslot = pyqtSignal(int, str)
     remove_plotline = pyqtSignal(int)
     remove_timeslot = pyqtSignal(int)
+    edit_cell = pyqtSignal(int, int, str)
+    clear_cell = pyqtSignal(int, int)
 
 
     def __init__(self, parent):
@@ -28,7 +30,8 @@ class Terminal(GenericTerminal):
             'i': (self.cmd_insert, 'Insert plotline/timeslot (i[pt][POS] [NAME])'),
             'm': (self.cmd_move, 'Move plotline/timeslot (m[pt][OLDPOS] [NEWPOS])'),
             'r': (self.cmd_remove, 'Remove plotline/timeslot (r[pt][POS])'),
-            'e': (self.cmd_edit, 'Edit cell'),
+            'e': (self.cmd_edit, 'Edit cell (e[COL] [ROW] [TEXT])'),
+            'c': (self.cmd_clear, 'Clear cell (c[COL] [ROW])'),
             'q': (self.cmd_quit, 'Quit')
         }
 
@@ -75,7 +78,20 @@ class Terminal(GenericTerminal):
             self.remove_timeslot.emit(int(rx.group(2)))
 
     def cmd_edit(self, arg):
-        pass
+        rx = re.match(r'(\d+) +(\d+)(\s+\S.*)?', arg)
+        if not rx:
+            self.error('Invalid edit command')
+        elif not rx.group(3):
+            self.edit_cell.emit(int(rx.group(1)), int(rx.group(2)), '')
+        else:
+            self.edit_cell.emit(int(rx.group(1)), int(rx.group(2)), rx.group(3).strip())
+
+    def cmd_clear(self, arg):
+        rx = re.match(r'(\d+) +(\d+)$', arg)
+        if not rx:
+            self.error('Invalid clear command')
+        else:
+            self.clear_cell.emit(int(rx.group(1)), int(rx.group(2)))
 
     def cmd_quit(self, arg):
         pass

@@ -49,3 +49,6 @@ class EventItem():
 
     def set_font(self, font):
         self.text_widget.setFont(font)
+
+    def text(self):
+        return self.text_widget.text()

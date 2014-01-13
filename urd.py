@@ -40,6 +40,9 @@ def connect_signals(scene, term):
         (term.move_timeslot, scene.move_timeslot),
         (term.remove_plotline, scene.remove_plotline),
         (term.remove_timeslot, scene.remove_timeslot),
+        (term.edit_cell, scene.edit_cell),
+        (term.clear_cell, scene.clear_cell),
+        (scene.prompt_sig, term.prompt),
         (scene.error_sig, term.error),
         (scene.print_, term.print_)
     )
