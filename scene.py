@@ -16,11 +16,18 @@ class Scene(QtGui.QGraphicsScene):
         self.horizontal_time = False
 
         self.setBackgroundBrush(QColor('#222'))
+        self.border = 24
+        self.rowpadding = 8
+        self.colpadding = 16
         self.row_heights = [0]
         self.column_widths = [0]
-        self.colpadding = 16
-        self.rowpadding = 8
-        self.border = 20
+        self.row_numbers = [None]
+        self.column_numbers = [None]
+        self.plotline_lines = [None]
+
+        self.line_pen = QPen(QColor('black'))
+        self.hline = self.addLine(0,0,0,0, self.line_pen)
+        self.vline = self.addLine(0,0,0,0, self.line_pen)
 
         self.brush = QBrush(QColor('#222'))
 
@@ -30,13 +37,6 @@ class Scene(QtGui.QGraphicsScene):
         self.header_font = QtGui.QFont('Serif', 10)
         self.header_font.setBold(True)
         self.header_fm = QtGui.QFontMetricsF(self.header_font)
-
-
-        self.line_pen = QPen(QColor('black'))
-        self.hline = self.addLine(0,0,0,0, self.line_pen)
-        self.vline = self.addLine(0,0,0,0, self.line_pen)
-
-        self.plotline_lines = [None]
 
         self.grid = Matrix(self, font, self.brush)
 
@@ -74,27 +74,9 @@ class Scene(QtGui.QGraphicsScene):
     def col_x(self, col):
         return self._coord(self.column_widths, self.colpadding, col)
 
-    def set_plotline_line_pos(self, line, pos):
-        if self.horizontal_time:
-            y = self.row_y(pos)
-            line.setLine(self.border+self.column_widths[0], y, self.border+sum(self.column_widths), y)
-        else:
-            x = self.col_x(pos)
-            line.setLine(x, self.border+self.row_heights[0], x, self.border+sum(self.row_heights))
-
-    def add_plotline_line(self, pos):
-        pen = QPen(QBrush(QColor('#444')), 5, cap=Qt.RoundCap)
-        line = self.addLine(0,0,0,0,pen)
-        self.set_plotline_line_pos(line, pos)
-        line.setZValue(-10)
-        self.plotline_lines.insert(pos, line)
-
-    def update_plotline_lines(self):
-        for n, line in enumerate(self.plotline_lines):
-            if line is None: continue
-            self.set_plotline_line_pos(line, n)
 
     # ==== ADD =======================================================
+
     def add_plotline(self, name):
         if self.horizontal_time:
             self.insert_row(1, name, append=True)
@@ -109,7 +91,9 @@ class Scene(QtGui.QGraphicsScene):
         else:
             self.insert_row(1, name, append=True)
 
+
     # ==== INSERT ====================================================
+
     def insert_plotline(self, pos, name):
         if self.horizontal_time:
             self.insert_row(pos, name)
@@ -130,6 +114,7 @@ class Scene(QtGui.QGraphicsScene):
         self.grid.add_row(row)
         self.row_heights.insert(row, 0)
         self.set_item(row, 0, name, header=True)
+        self.add_row_number()
 
     def insert_column(self, column, name, append=False):
         column = max(1, min(column, len(self.column_widths)))
@@ -138,8 +123,11 @@ class Scene(QtGui.QGraphicsScene):
         self.grid.add_column(column)
         self.column_widths.insert(column, 0)
         self.set_item(0, column, name, header=True)
+        self.add_column_number()
+
 
     # ==== REMOVE ====================================================
+
     def remove_plotline(self, pos):
         if pos in range(len(self.plotline_lines)):
             self.removeItem(self.plotline_lines[pos])
@@ -166,6 +154,7 @@ class Scene(QtGui.QGraphicsScene):
         self.update_cell_pos()
         self.update_lines()
         self.update_plotline_lines()
+        self.remove_row_number()
 
     def remove_column(self, column):
         if not column in range(self.grid.count_columns()):
@@ -178,8 +167,11 @@ class Scene(QtGui.QGraphicsScene):
         self.update_cell_pos()
         self.update_lines()
         self.update_plotline_lines()
+        self.remove_column_number()
+
 
     # ==== MOVE ======================================================
+
     def move_plotline(self, oldpos, newpos):
         if self.horizontal_time:
             self.move_row(oldpos, newpos)
@@ -193,7 +185,7 @@ class Scene(QtGui.QGraphicsScene):
         else:
             self.move_row(oldpos, newpos)
 
-    def fix_movepos(self, oldpos, newpos):
+    def _fix_movepos(self, oldpos, newpos):
         if newpos == '+':
             newpos = oldpos + 1
         elif newpos == '-':
@@ -206,23 +198,26 @@ class Scene(QtGui.QGraphicsScene):
         if not oldpos in range(1, self.grid.count_rows()):
             self.error.emit('Row doesn\'t exist')
             return
-        oldpos, newpos = self.fix_movepos(oldpos, newpos)
+        oldpos, newpos = self._fix_movepos(oldpos, newpos)
         self.grid.move_row(oldpos, newpos)
         row = self.row_heights.pop(oldpos)
         self.row_heights.insert(newpos, row)
         self.update_cell_pos()
+        self.update_numbers()
 
     def move_column(self, oldpos, newpos):
         if not oldpos in range(1, self.grid.count_columns()):
             self.error.emit('Column doesn\'t exist')
             return
-        oldpos, newpos = self.fix_movepos(oldpos, newpos)
+        oldpos, newpos = self._fix_movepos(oldpos, newpos)
         self.grid.move_column(oldpos, newpos)
         column = self.column_widths.pop(oldpos)
         self.column_widths.insert(newpos, column)
         self.update_cell_pos()
+        self.update_numbers()
 
 
+    # ==== SET ITEM ==================================================
 
     def set_item(self, row, column, text, header=False):
         text = text.replace('\\n', '\n')
@@ -241,11 +236,24 @@ class Scene(QtGui.QGraphicsScene):
         self.update_cell_size(row, column)
         self.update_cell_pos()
         self.update_plotline_lines()
+        self.update_numbers()
+
+
+    # ======= CELL HANDLING =============================================
 
     def update_cell_size(self, row, column):
         self.row_heights[row] = max(x.height() for x in self.grid.row_items(row)) + self.rowpadding
         self.column_widths[column] = max(x.width() for x in self.grid.column_items(column)) + self.colpadding
         self.update_lines()
+
+    def update_cell_pos(self):
+        for r in range(self.grid.count_rows()):
+            for c in range(self.grid.count_columns()):
+                item = self.grid.item(r,c)
+                item.set_pos(self.col_x(c), self.row_y(r))
+
+
+    # ======= LINES =====================================================
 
     def update_lines(self):
         hy = self.border + self.row_heights[0] - self.rowpadding/2
@@ -253,11 +261,61 @@ class Scene(QtGui.QGraphicsScene):
         self.hline.setLine(0,hy,self.border + sum(self.column_widths),hy)
         self.vline.setLine(vx,0,vx,self.border + sum(self.row_heights))
 
-    def update_cell_pos(self):
-        for r in range(self.grid.count_rows()):
-            for c in range(self.grid.count_columns()):
-                item = self.grid.item(r,c)
-                item.set_pos(self.col_x(c), self.row_y(r))
+
+    # ======= PLOTLINE LINES ============================================
+
+    def _set_plotline_line_pos(self, line, pos):
+        if self.horizontal_time:
+            y = self.row_y(pos)
+            line.setLine(self.border+self.column_widths[0], y, self.border+sum(self.column_widths), y)
+        else:
+            x = self.col_x(pos)
+            line.setLine(x, self.border+self.row_heights[0], x, self.border+sum(self.row_heights))
+
+    def add_plotline_line(self, pos):
+        pen = QPen(QBrush(QColor('#444')), 5, cap=Qt.RoundCap)
+        line = self.addLine(0,0,0,0,pen)
+        self._set_plotline_line_pos(line, pos)
+        line.setZValue(-10)
+        self.plotline_lines.insert(pos, line)
+
+    def update_plotline_lines(self):
+        for n, line in enumerate(self.plotline_lines):
+            if line is None: continue
+            self._set_plotline_line_pos(line, n)
+
+
+    # ======= NUMBERS ===================================================
+
+    def add_row_number(self):
+        self._add_number(self.row_numbers)
+
+    def add_column_number(self):
+        self._add_number(self.column_numbers)
+
+    def _add_number(self, arr):
+        num = self.addSimpleText(str(len(arr)))
+        arr.append(num)
+        self.update_numbers()
+
+    def remove_row_number(self):
+        self._remove_number(self.row_numbers)
+
+    def remove_column_number(self):
+        self._remove_number(self.column_numbers)
+
+    def _remove_number(self, arr):
+        self.removeItem(arr[-1])
+        del arr[-1]
+        self.update_numbers()
+
+    def update_numbers(self):
+        for n, item in enumerate(self.row_numbers):
+            if not n: continue
+            item.setPos(4, self.row_y(n)-item.boundingRect().height()/2)
+        for n, item in enumerate(self.column_numbers):
+            if not n: continue
+            item.setPos(self.col_x(n)-item.boundingRect().width()/2, 4)
 
 
 if __name__ == '__main__':
