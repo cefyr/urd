@@ -87,27 +87,17 @@ class Scene(QtGui.QGraphicsScene):
     # ==== ADD =======================================================
     def add_plotline(self, name):
         if self.horizontal_time:
-            self.add_row(name)
+            self.insert_row(1, name, append=True)
             self.add_plotline_line(len(self.row_heights)-1)
         else:
-            self.add_column(name)
+            self.insert_column(1, name, append=True)
             self.add_plotline_line(len(self.column_widths)-1)
 
     def add_timeslot(self, name):
         if self.horizontal_time:
-            self.add_column(name)
+            self.insert_column(1, name, append=True)
         else:
-            self.add_row(name)
-
-    def add_row(self, name):
-        self.grid.add_row()
-        self.row_heights.append(0)
-        self.set_item(len(self.row_heights)-1, 0, name, header=True)
-
-    def add_column(self, name):
-        self.grid.add_column()
-        self.column_widths.append(0)
-        self.set_item(0, len(self.column_widths)-1, name, header=True)
+            self.insert_row(1, name, append=True)
 
     # ==== INSERT ====================================================
     def insert_plotline(self, pos, name):
@@ -123,14 +113,18 @@ class Scene(QtGui.QGraphicsScene):
         else:
             self.insert_row(pos, name)
 
-    def insert_row(self, row, name):
-        assert row > 0
+    def insert_row(self, row, name, append=False):
+        row = max(1, min(row, len(self.row_heights)))
+        if append:
+            row = len(self.row_heights)
         self.grid.add_row(row)
         self.row_heights.insert(row, 0)
         self.set_item(row, 0, name, header=True)
 
-    def insert_column(self, column, name):
-        assert column > 0
+    def insert_column(self, column, name, append=False):
+        column = max(1, min(column, len(self.column_widths)))
+        if append:
+            column = len(self.column_widths)
         self.grid.add_column(column)
         self.column_widths.insert(column, 0)
         self.set_item(0, column, name, header=True)
