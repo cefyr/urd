@@ -12,7 +12,7 @@ class Matrix():
         self.data = [[self._default_item()]]
 
     def __str__(self):
-        return '\n'.join('\t|\t'.join(x[0].text() for x in row) for row in self.data)
+        return '\n'.join('\t|\t'.join(x.text() for x in row) for row in self.data)
 
     def size(self):
         return ('rows', len(self.data), 'cols', len(self.data[0]))
