@@ -8,6 +8,10 @@ from libsyntyche.terminal import GenericTerminalInputBox, GenericTerminalOutputB
 
 
 class Terminal(GenericTerminal):
+    request_new_file = pyqtSignal(bool)
+    request_open_file = pyqtSignal(str, bool)
+    request_save_file = pyqtSignal(str, bool)
+    request_quit = pyqtSignal(bool)
 
     add_plotline = pyqtSignal(str)
     add_timeslot = pyqtSignal(str)
@@ -32,6 +36,9 @@ class Terminal(GenericTerminal):
             'r': (self.cmd_remove, 'Remove plotline/timeslot (r[pt][POS])'),
             'e': (self.cmd_edit_cell, 'Edit cell (e[COL] [ROW] [TEXT])'),
             'c': (self.cmd_clear_cell, 'Clear cell (c[COL] [ROW])'),
+            'o': (self.cmd_open, 'Open [file]'),
+            'n': (self.cmd_new, 'Open new file'),
+            's': (self.cmd_save, 'Save (as) [file]'),
             'q': (self.cmd_quit, 'Quit')
         }
 
@@ -93,7 +100,17 @@ class Terminal(GenericTerminal):
         else:
             self.clear_cell.emit(int(rx.group(1)), int(rx.group(2)))
 
+    def cmd_open(self, arg):
+        fname = arg.lstrip('!').lstrip()
+        self.request_open_file.emit(fname, arg.startswith('!'))
+
+    def cmd_new(self, arg):
+        self.request_new_file.emit(arg.startswith('!'))
+
+    def cmd_save(self, arg):
+        fname = arg.lstrip('!').lstrip()
+        self.request_save_file.emit(fname, arg.startswith('!'))
+
     def cmd_quit(self, arg):
-        pass
-        # self.request_quit.emit(arg.startswith('!'))
+        self.request_quit.emit(arg.startswith('!'))
 

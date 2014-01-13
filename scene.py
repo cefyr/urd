@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
+import csv
+
 from PyQt4 import QtGui
 from PyQt4.QtGui import QBrush, QColor, QPen
 from PyQt4.QtCore import pyqtSignal, Qt
 
+from libsyntyche.filehandling import FileHandler
+
 from matrix import Matrix
 
 
-class Scene(QtGui.QGraphicsScene):
+class Scene(QtGui.QGraphicsScene, FileHandler):
     print_ = pyqtSignal(str)
     error_sig = pyqtSignal(str)
     prompt_sig = pyqtSignal(str)
@@ -49,6 +53,33 @@ class Scene(QtGui.QGraphicsScene):
         self.add_timeslot('later')
         self.add_timeslot('the\nend')
 
+
+    # ====== NUKE EVERYTHING =========================================
+
+    def clear_scene(self):
+        self.row_heights, self.column_widths = [0], [0]
+
+        for item in self.row_numbers[1:] + self.column_numbers[1:] + self.plotline_lines[1:]:
+            self.removeItem(item)
+        self.row_numbers = [None]
+        self.column_numbers = [None]
+        self.plotline_lines = [None]
+
+        self.hline.setLine(0,0,0,0)
+        self.vline.setLine(0,0,0,0)
+
+        for row in list(range(self.grid.count_rows()))[:0:-1]:
+            for item in self.grid.row_items(row):
+                item.remove()
+            self.grid.remove_row(row)
+
+        for n,item in list(enumerate(self.grid.row_items(0)))[:0:-1]:
+            print('n',n)
+            item.remove()
+            self.grid.remove_column(n)
+
+
+    # ====== UNDO ====================================================
 
 
     # ====== CONVENIENCE FUNCTIONS ===================================
@@ -327,6 +358,39 @@ class Scene(QtGui.QGraphicsScene):
         for n, item in enumerate(self.column_numbers):
             if not n: continue
             item.setPos(self.col_x(n)-item.boundingRect().width()/2, 4)
+
+
+    # ======= FILE HANDLING =============================================
+
+    def is_modified(self):
+        return False #TODO
+
+    def dirty_window_and_start_in_new_process(self):
+        return False #TODO
+
+    def post_new(self):
+        self.clear_scene()
+
+    def open_file(self, filename):
+        text_matrix = []
+        with open(filename, newline='', encoding='utf-8') as f:
+            reader = csv.reader(f, dialect='unix', quoting=csv.QUOTE_MINIMAL)
+            for row in reader:
+                text_matrix.append(row)
+
+
+        return True
+
+    def write_file(self, filename):
+        direction = 'HORIZONTAL TIME' if self.horizontal_time else 'VERTICAL TIME'
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f, dialect='unix', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([direction])
+            for row in range(self.grid.count_rows()):
+                writer.writerow([x.text() for x in self.grid.row_items(row)])
+
+    def post_save(self, saved_filename):
+        pass
 
 
 if __name__ == '__main__':
