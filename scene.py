@@ -30,6 +30,9 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
         self.column_numbers = [None]
         self.plotline_lines = [None]
 
+        self.undo_stack = []
+        self.undo_plotline_buffer = ()
+
         self.line_pen = QPen(QColor('black'))
         self.hline = self.addLine(0,0,0,0, self.line_pen)
         self.vline = self.addLine(0,0,0,0, self.line_pen)
@@ -47,12 +50,18 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
 
         # Debug
         self.add_plotline('p1')
-        self.add_timeslot('t1123456')
+        self.add_plotline('"BLO"OP"')
+        self.add_timeslot('t11\'2\'3456')
         self.add_timeslot('t2')
-        self.add_timeslot('t3')
+        self.add_timeslot('ththw\\fat3')
         self.add_timeslot('later')
         self.add_timeslot('the\nend')
 
+        # self.clear_scene()
+
+        # print('grid', self.grid)
+
+        # self.write_file('test.csv')
 
     # ====== NUKE EVERYTHING =========================================
 
@@ -81,6 +90,59 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
 
     # ====== UNDO ====================================================
 
+    def add_undo(self, cmd, arg):
+        # Move
+        if cmd[0] == 'm':
+            old, new = arg
+            if old < new:
+                new += 1
+            self.undo_stack.append((cmd, (old, new)))
+        # Add
+        elif cmd[0] == 'a':
+            pos, arr = arg
+            items = [x.text() if x.is_visible() else None for x in arr]
+            self.undo_stack.append((cmd, (pos, items, self.undo_plotline_buffer)))
+            self.undo_plotline_buffer = ()
+        # Remove
+        elif cmd[0] == 'r':
+            pos, arr = arg
+            items = [x.text() if x.is_visible() else None for x in arr]
+            self.undo_stack.append((cmd, (pos, items, self.undo_plotline_buffer)))
+            self.undo_plotline_buffer = ()
+        else:
+            self.undo_stack.append((cmd, arg))
+
+    def undo(self, _):
+        if not self.undo_stack:
+            return
+        undoitem = self.undo_stack.pop()
+        cmd, arg = undoitem
+        # Move
+        if cmd[0] == 'm':
+            if cmd[1] == 'r':
+                self.move_row(*arg)
+            elif cmd[1] == 'c':
+                self.move_column(*arg)
+        # Clear
+        elif cmd[0] == 'c':
+            self.clear_cell(*arg, add_undo=False)
+        # Edit
+        elif cmd[0] == 'e':
+            self.set_cell(*arg)
+        # Add
+        elif cmd[0] == 'a':
+            pos, items = arg
+            if cmd[1] == 'r':
+                self.insert_row(pos, items[0], add_undo=False)
+                for n, item in list(enumerate(items))[1:]:
+                    if item is not None:
+                        self.set_cell(pos, n, item)
+            elif cmd[1] == 'c':
+                self.insert_column(pos, items[0], add_undo=False)
+                for n, item in list(enumerate(items))[1:]:
+                    if item is not None:
+                        self.set_cell(n, pos, item)
+
 
     # ====== CONVENIENCE FUNCTIONS ===================================
 
@@ -105,9 +167,11 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
     def add_plotline(self, name):
         if self.horizontal_time:
             self.insert_row(1, name, append=True)
+            self.undo_plotline_buffer = ('r', len(self.row_heights)-1)
             self.add_plotline_line(len(self.row_heights)-1)
         else:
             self.insert_column(1, name, append=True)
+            self.undo_plotline_buffer = ('r', len(self.column_widths)-1)
             self.add_plotline_line(len(self.column_widths)-1)
 
     def add_timeslot(self, name):
@@ -124,6 +188,7 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
             self.insert_row(pos, name)
         else:
             self.insert_column(pos, name)
+        self.undo_plotline_buffer = ('r', pos)
         self.add_plotline_line(pos)
 
     def insert_timeslot(self, pos, name):
@@ -132,7 +197,7 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
         else:
             self.insert_row(pos, name)
 
-    def insert_row(self, row, name, append=False):
+    def insert_row(self, row, name, append=False, add_undo=True):
         row = max(1, min(row, len(self.row_heights)))
         if append:
             row = len(self.row_heights)
@@ -141,7 +206,7 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
         self.set_cell(row, 0, name, header=True)
         self.add_row_number()
 
-    def insert_column(self, column, name, append=False):
+    def insert_column(self, column, name, append=False, add_undo=True):
         column = max(1, min(column, len(self.column_widths)))
         if append:
             column = len(self.column_widths)
@@ -155,6 +220,7 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
 
     def remove_plotline(self, pos):
         if pos in range(len(self.plotline_lines)):
+            self.undo_plotline_buffer = ('a', pos)
             self.removeItem(self.plotline_lines[pos])
             del self.plotline_lines[pos]
         if self.horizontal_time:
@@ -172,6 +238,7 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
         if not row in range(self.grid.count_rows()):
             self.error('Row doesn\'t exist')
             return
+        self.add_undo('ar', (row, self.grid.row_items(row)))
         for item in self.grid.row_items(row):
             item.remove()
         self.grid.remove_row(row)
@@ -185,6 +252,7 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
         if not column in range(self.grid.count_columns()):
             self.error('Column doesn\'t exist')
             return
+        self.add_undo('ac', (column, self.grid.column_items(column)))
         for item in self.grid.column_items(column):
             item.remove()
         self.grid.remove_column(column)
@@ -229,6 +297,7 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
         self.row_heights.insert(newpos, row)
         self.update_cell_pos()
         self.update_numbers()
+        self.add_undo('mr', (newpos, oldpos))
 
     def move_column(self, oldpos, newpos):
         if not oldpos in range(1, self.grid.count_columns()):
@@ -240,6 +309,7 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
         self.column_widths.insert(newpos, column)
         self.update_cell_pos()
         self.update_numbers()
+        self.add_undo('mc', (newpos, oldpos))
 
 
     # ======= CELL HANDLING =============================================
@@ -253,15 +323,26 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
             oldtext = self.grid.item(row, column).text()
             self.prompt('e{} {} {}'.format(column, row, oldtext))
         else:
+            item = self.grid.item(row, column)
+            if not item.is_visible():
+                self.add_undo('c', (column, row))
+            else:
+                self.add_undo('e', (row, column, self.grid.item(row, column).text()))
             self.set_cell(row, column, text)
 
-    def clear_cell(self, column, row):
+    def clear_cell(self, column, row, add_undo=True):
         if column not in range(self.grid.count_columns()):
             self.error('Column doesn\'t exist')
         elif row not in range(self.grid.count_rows()):
             self.error('Row doesn\'t exist')
         else:
+            if add_undo:
+                self.add_undo('e', (row, column, self.grid.item(row, column).text()))
             self.grid.clear_item(row, column)
+            self.update_cell_size(row, column)
+            self.update_cell_pos()
+            self.update_plotline_lines()
+            self.update_numbers()
 
     def set_cell(self, row, column, text, header=False):
         text = text.replace('\\n', '\n')

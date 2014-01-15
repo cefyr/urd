@@ -24,6 +24,8 @@ class Terminal(GenericTerminal):
     edit_cell = pyqtSignal(int, int, str)
     clear_cell = pyqtSignal(int, int)
 
+    undo = pyqtSignal(str)
+
 
     def __init__(self, parent):
         super().__init__(parent, GenericTerminalInputBox, GenericTerminalOutputBox)
@@ -36,6 +38,7 @@ class Terminal(GenericTerminal):
             'r': (self.cmd_remove, 'Remove plotline/timeslot (r[pt][POS])'),
             'e': (self.cmd_edit_cell, 'Edit cell (e[COL] [ROW] [TEXT])'),
             'c': (self.cmd_clear_cell, 'Clear cell (c[COL] [ROW])'),
+            'u': (self.undo, 'Undo'),
             'o': (self.cmd_open, 'Open [file]'),
             'n': (self.cmd_new, 'Open new file'),
             's': (self.cmd_save, 'Save (as) [file]'),

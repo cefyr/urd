@@ -60,6 +60,7 @@ class MainWindow(QtGui.QFrame):
             (term.remove_timeslot, scene.remove_timeslot),
             (term.edit_cell, scene.edit_cell),
             (term.clear_cell, scene.clear_cell),
+            (term.undo, scene.undo),
             (scene.prompt_sig, term.prompt),
             (scene.error_sig, term.error),
             (scene.print_, term.print_),

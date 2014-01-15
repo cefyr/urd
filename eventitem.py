@@ -30,6 +30,9 @@ class EventItem():
         self.text_widget.hide()
         self.size.scale(0, 0, QtCore.Qt.IgnoreAspectRatio)
 
+    def is_visible(self):
+        return self.text_widget.isVisible()
+
     def width(self):
         return self.size.width()
 
