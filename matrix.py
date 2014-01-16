@@ -1,54 +1,45 @@
 
-from PyQt4 import QtGui, QtCore
-
-from eventitem import EventItem
-
+def default_item():
+    return ('', (0,0))
 
 class Matrix():
-    def __init__(self, scene, item_font, item_brush):
-        self.scene = scene
-        self.item_font = item_font
-        self.item_brush = item_brush
-        self.data = [[self._default_item()]]
+    def __init__(self):
+        self.data = [[default_item()]]
 
     def __str__(self):
-        return '\n'.join('\t|\t'.join(x.text() for x in row) for row in self.data)
+        return '\n'.join(repr(row) for row in self.data)
+        # return '\n'.join('\t|\t'.join(repr(x) for x in row) for row in self.data)
 
-    def size(self):
-        return ('rows', len(self.data), 'cols', len(self.data[0]))
+    def clear(self):
+        self.data = [[default_item()]]
 
-    def _default_item(self):
-        item = EventItem(self.scene, self.item_font, self.item_brush)
-        # item = QtGui.QGraphicsSimpleTextItem(scene=self.scene)
-        # item.setFont(self.item_font)
-        # item.setBrush(self.item_brush)
-        # item.hide()
-        return item #(item, QtCore.QSizeF(0,0))
+    def flip_orientation(self):
+        self.data = list(map(list, zip(*self.data)))
 
     def count_rows(self):
         return len(self.data)
 
-    def count_columns(self):
+    def count_cols(self):
         return len(self.data[0])
 
     def add_row(self, pos=-1):
-        data = [self._default_item() for _ in range(len(self.data[0]))]
+        data = [default_item() for _ in range(len(self.data[0]))]
         if pos == -1:
             self.data.append(data)
         else:
             self.data.insert(pos, data)
 
-    def add_column(self, pos=-1):
+    def add_col(self, pos=-1):
         for n in range(len(self.data)):
             if pos == -1:
-                self.data[n].append(self._default_item())
+                self.data[n].append(default_item())
             else:
-                self.data[n].insert(pos, self._default_item())
+                self.data[n].insert(pos, default_item())
 
     def remove_row(self, pos):
         del self.data[pos]
 
-    def remove_column(self, pos):
+    def remove_col(self, pos):
         for n in range(len(self.data)):
             del self.data[n][pos]
 
@@ -56,7 +47,7 @@ class Matrix():
         row = self.data.pop(oldpos)
         self.data.insert(newpos, row)
 
-    def move_column(self, oldpos, newpos):
+    def move_col(self, oldpos, newpos):
         for n in range(len(self.data)):
             x = self.data[n].pop(oldpos)
             self.data[n].insert(newpos, x)
@@ -64,20 +55,14 @@ class Matrix():
     def row_items(self, pos):
         return self.data[pos]
 
-    def column_items(self, pos):
+    def col_items(self, pos):
         return [x[pos] for x in self.data]
 
-    def item(self, row, column):
-        return self.data[row][column]
+    def item(self, col, row):
+        return self.data[row][col]
 
-    def set_item(self, row, column, text, font, size, x, y):
-        item = self.data[row][column]
-        item.set_text(text)
-        if font:
-            item.set_font(font)
-        item.set_pos(x,y)
-        item.set_size(size)
-        item.show()
+    def set_item(self, col, row, text, size):
+        self.data[row][col] = (text, size)
 
-    def clear_item(self, row, column):
-        self.data[row][column].hide()
+    def clear_item(self, col, row):
+        self.data[row][col] = default_item()

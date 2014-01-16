@@ -2,7 +2,7 @@
 
 import csv
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QBrush, QColor, QPen
 from PyQt4.QtCore import pyqtSignal, Qt
 
@@ -11,149 +11,109 @@ from libsyntyche.filehandling import FileHandler
 from matrix import Matrix
 
 
-class Scene(QtGui.QGraphicsScene, FileHandler):
+
+
+
+class Scene(QtGui.QWidget, FileHandler):
     print_ = pyqtSignal(str)
     error_sig = pyqtSignal(str)
     prompt_sig = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
+
         self.horizontal_time = False
+        self.modified_flag = False
 
-        self.setBackgroundBrush(QColor('#222'))
-        self.border = 24
-        self.rowpadding = 8
-        self.colpadding = 16
-        self.row_heights = [0]
-        self.column_widths = [0]
-        self.row_numbers = [None]
-        self.column_numbers = [None]
-        self.plotline_lines = [None]
-
+        self.grid = Matrix()
         self.undo_stack = []
-        self.undo_plotline_buffer = ()
-
-        self.line_pen = QPen(QColor('black'))
-        self.hline = self.addLine(0,0,0,0, self.line_pen)
-        self.vline = self.addLine(0,0,0,0, self.line_pen)
-
-        self.brush = QBrush(QColor('#222'))
 
         font = QtGui.QFont('Serif', 10)
-        self.fm = QtGui.QFontMetricsF(font)
+        boldfont = QtGui.QFont('Serif', 10, weight=QtGui.QFont.Bold)
+        self.font_data = {'def': (font, QtGui.QFontMetrics(font)),
+                          'bold': (boldfont, QtGui.QFontMetrics(boldfont))}
 
-        self.header_font = QtGui.QFont('Serif', 10)
-        self.header_font.setBold(True)
-        self.header_fm = QtGui.QFontMetricsF(self.header_font)
+        # DEBUG
+        self.insert_plotline(1, "This function does not handle the newline character (\\n), as it cannot break text into multiple lines, and it cannot display the newline character. Use the QPainter.drawText() overload that takes a rectangle instead if you want to draw multiple lines of text with the newline character, or if you want the text to be wrapped.")
+        self.add_timeslot("HEI")
+        self.add_timeslot("HE2")
+        self.add_timeslot("HE3")
+        self.add_timeslot("HE4")
+        self.add_timeslot("HE5")
+        self.remove_timeslot(3)
 
-        self.grid = Matrix(self, font, self.brush)
+        self.add_timeslot("neee")
+        self.edit_cell(1,1,"VA?\nHE\n \nHEHE")
+        # self.move_timeslot(8,0)
+        # END DEBUG
 
-        # Debug
-        self.add_plotline('p1')
-        self.add_plotline('"BLO"OP"')
-        self.add_timeslot('t11\'2\'3456')
-        self.add_timeslot('t2')
-        self.add_timeslot('ththw\\fat3')
-        self.add_timeslot('later')
-        self.add_timeslot('the\nend')
-
-        # self.clear_scene()
-
-        # print('grid', self.grid)
-
-        # self.write_file('test.csv')
-
-    # ====== NUKE EVERYTHING =========================================
-
-    def clear_scene(self):
-        self.row_heights, self.column_widths = [0], [0]
-
-        for item in self.row_numbers[1:] + self.column_numbers[1:] + self.plotline_lines[1:]:
-            self.removeItem(item)
-        self.row_numbers = [None]
-        self.column_numbers = [None]
-        self.plotline_lines = [None]
-
-        self.hline.setLine(0,0,0,0)
-        self.vline.setLine(0,0,0,0)
-
-        for row in list(range(self.grid.count_rows()))[:0:-1]:
-            for item in self.grid.row_items(row):
-                item.remove()
-            self.grid.remove_row(row)
-
-        for n,item in list(enumerate(self.grid.row_items(0)))[:0:-1]:
-            print('n',n)
-            item.remove()
-            self.grid.remove_column(n)
+        self.draw_scene()
 
 
-    # ====== UNDO ====================================================
+    def paintEvent(self, ev):
+        painter = QtGui.QPainter(self)
+        painter.drawPixmap(0,0,self.scene_image)
 
-    def add_undo(self, cmd, arg):
-        # Move
-        if cmd[0] == 'm':
-            old, new = arg
-            if old < new:
-                new += 1
-            self.undo_stack.append((cmd, (old, new)))
-        # Add
-        elif cmd[0] == 'a':
-            pos, arr = arg
-            items = [x.text() if x.is_visible() else None for x in arr]
-            self.undo_stack.append((cmd, (pos, items, self.undo_plotline_buffer)))
-            self.undo_plotline_buffer = ()
-        # Remove
-        elif cmd[0] == 'r':
-            pos, arr = arg
-            items = [x.text() if x.is_visible() else None for x in arr]
-            self.undo_stack.append((cmd, (pos, items, self.undo_plotline_buffer)))
-            self.undo_plotline_buffer = ()
-        else:
-            self.undo_stack.append((cmd, arg))
+    def draw_scene(self):
+        border = 24
+        row_padding, col_padding = 20, 20
+        row_heights = [max([x[1][1] for x in self.grid.row_items(row) if x[0]] + [0]) + row_padding
+                       for row in range(self.grid.count_rows())]
+        col_widths = [max([x[1][0] for x in self.grid.col_items(col) if x[0]] + [0]) + col_padding
+                      for col in range(self.grid.count_cols())]
 
-    def undo(self, _):
-        if not self.undo_stack:
-            return
-        undoitem = self.undo_stack.pop()
-        cmd, arg = undoitem
-        # Move
-        if cmd[0] == 'm':
-            if cmd[1] == 'r':
-                self.move_row(*arg)
-            elif cmd[1] == 'c':
-                self.move_column(*arg)
-        # Clear
-        elif cmd[0] == 'c':
-            self.clear_cell(*arg, add_undo=False)
-        # Edit
-        elif cmd[0] == 'e':
-            self.set_cell(*arg)
-        # Add
-        elif cmd[0] == 'a':
-            pos, items = arg
-            if cmd[1] == 'r':
-                self.insert_row(pos, items[0], add_undo=False)
-                for n, item in list(enumerate(items))[1:]:
-                    if item is not None:
-                        self.set_cell(pos, n, item)
-            elif cmd[1] == 'c':
-                self.insert_column(pos, items[0], add_undo=False)
-                for n, item in list(enumerate(items))[1:]:
-                    if item is not None:
-                        self.set_cell(n, pos, item)
+        width = sum(col_widths) + border
+        height = sum(row_heights) + border
+        self.scene_image = QtGui.QPixmap(width, height)
 
+        # Begin paint
+        self.scene_image.fill(QColor('#666'))
+        painter = QtGui.QPainter(self.scene_image)
+        painter.setFont(self.font_data['def'][0])
 
-    # ====== CONVENIENCE FUNCTIONS ===================================
+        # Draw header lines
+        hy = int(border + row_heights[0])
+        vx = int(border + col_widths[0])
+        painter.drawLine(0, hy, border + sum(col_widths), hy)
+        painter.drawLine(vx, 0, vx, border + sum(row_heights))
 
-    def _coord(self, arr, padding, pos):
-        return self.border + sum(arr[:pos]) + arr[pos]/2 - padding/2
+        # Draw border numbers #TODO: fix the offsets
+        for n, rh in list(enumerate(row_heights))[1:]:
+            painter.drawText(4, border + sum(row_heights[:n]) + rh/2 + 5, str(n))
+        for n, cw in list(enumerate(col_widths))[1:]:
+            painter.drawText(border + sum(col_widths[:n]) + cw/2 - 5, 16, str(n))
 
-    def row_y(self, row):
-        return self._coord(self.row_heights, self.rowpadding, row)
+        # Draw plotline lines
+        for n, size in enumerate((col_widths, row_heights)[self.horizontal_time]):
+            if n == 0: continue
+            if self.horizontal_time:
+                x, y = col_widths[0]/2, sum(row_heights[:n]) + size/2 - 5
+                w, h = sum(col_widths), 10
+            else:
+                x, y = sum(col_widths[:n]) + size/2 - 5, row_heights[0]/2
+                w, h = 10, sum(row_heights)
+            painter.fillRect(border + x, border + y, w, h, QColor('black'))
 
-    def col_x(self, col):
-        return self._coord(self.column_widths, self.colpadding, col)
+        # Draw cells
+        for r in range(self.grid.count_rows()):
+            for c in range(self.grid.count_cols()):
+                text, size = self.grid.item(c,r)
+                if not text: continue
+                if c == 0 or r == 0:
+                    painter.setFont(self.font_data['bold'][0])
+                else:
+                    painter.setFont(self.font_data['def'][0])
+                x = border + sum(col_widths[:c]) + col_widths[c]/2 - size[0]/2
+                y = border + sum(row_heights[:r]) + row_heights[r]/2 - size[1]/2
+                painter.fillRect(x-2, y-2, size[0]+4, size[1]+4, QColor('#ccc'))
+                painter.drawRect(x-3, y-3, size[0]+5, size[1]+5)
+                painter.drawText(x, y, size[0], size[1], Qt.TextWordWrap, text)
+
+        painter.end()
+
+        self.resize(width, height)
+        self.update()
+
 
     def prompt(self, text):
         self.prompt_sig.emit(text)
@@ -162,295 +122,156 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
         self.error_sig.emit(text)
 
 
-    # ==== ADD =======================================================
+    def do_row(self, arg):
+        return (self.horizontal_time and arg == 'p') \
+            or (not self.horizontal_time and arg == 't')
 
+    def set_time_orientation(self, orientation):
+        if orientation not in 'hv':
+            self.error('Orientation must be h or v')
+            return
+        if (orientation == 'h' and self.horizontal_time) or (orientation == 'v' and not self.horizontal_time):
+            return
+        self.add_undo('flip', None)
+        self.grid.flip_orientation()
+        self.horizontal_time = not self.horizontal_time
+        self.draw_scene()
+
+
+    # ======== ADD ===========================================================
     def add_plotline(self, name):
-        if self.horizontal_time:
-            self.insert_row(1, name, append=True)
-            self.undo_plotline_buffer = ('r', len(self.row_heights)-1)
-            self.add_plotline_line(len(self.row_heights)-1)
-        else:
-            self.insert_column(1, name, append=True)
-            self.undo_plotline_buffer = ('r', len(self.column_widths)-1)
-            self.add_plotline_line(len(self.column_widths)-1)
+        self.insert_plotline(-1, name)
 
     def add_timeslot(self, name):
-        if self.horizontal_time:
-            self.insert_column(1, name, append=True)
-        else:
-            self.insert_row(1, name, append=True)
+        self.insert_timeslot(-1, name)
 
-
-    # ==== INSERT ====================================================
-
+    # ======== INSERT ========================================================
     def insert_plotline(self, pos, name):
-        if self.horizontal_time:
-            self.insert_row(pos, name)
-        else:
-            self.insert_column(pos, name)
-        self.undo_plotline_buffer = ('r', pos)
-        self.add_plotline_line(pos)
+        self._insert(pos, name, 'p')
 
     def insert_timeslot(self, pos, name):
-        if self.horizontal_time:
-            self.insert_column(pos, name)
+        self._insert(pos, name, 't')
+
+    def _insert(self, pos, name, arg):
+        if self.do_row(arg):
+            self.grid.add_row(pos)
+            x, y = 0, pos
+            self.add_undo('ir', pos)
         else:
-            self.insert_row(pos, name)
-
-    def insert_row(self, row, name, append=False, add_undo=True):
-        row = max(1, min(row, len(self.row_heights)))
-        if append:
-            row = len(self.row_heights)
-        self.grid.add_row(row)
-        self.row_heights.insert(row, 0)
-        self.set_cell(row, 0, name, header=True)
-        self.add_row_number()
-
-    def insert_column(self, column, name, append=False, add_undo=True):
-        column = max(1, min(column, len(self.column_widths)))
-        if append:
-            column = len(self.column_widths)
-        self.grid.add_column(column)
-        self.column_widths.insert(column, 0)
-        self.set_cell(0, column, name, header=True)
-        self.add_column_number()
+            self.grid.add_col(pos)
+            x, y = pos, 0
+            self.add_undo('ic', pos)
+        self.set_cell(x, y, name, self.font_data['bold'])
+        self.draw_scene()
 
 
-    # ==== REMOVE ====================================================
-
-    def remove_plotline(self, pos):
-        if pos in range(len(self.plotline_lines)):
-            self.undo_plotline_buffer = ('a', pos)
-            self.removeItem(self.plotline_lines[pos])
-            del self.plotline_lines[pos]
-        if self.horizontal_time:
-            self.remove_row(pos)
-        else:
-            self.remove_column(pos)
-
-    def remove_timeslot(self, pos):
-        if self.horizontal_time:
-            self.remove_column(pos)
-        else:
-            self.remove_row(pos)
-
-    def remove_row(self, row):
-        if not row in range(self.grid.count_rows()):
-            self.error('Row doesn\'t exist')
-            return
-        self.add_undo('ar', (row, self.grid.row_items(row)))
-        for item in self.grid.row_items(row):
-            item.remove()
-        self.grid.remove_row(row)
-        del self.row_heights[row]
-        self.update_cell_pos()
-        self.update_lines()
-        self.update_plotline_lines()
-        self.remove_row_number()
-
-    def remove_column(self, column):
-        if not column in range(self.grid.count_columns()):
-            self.error('Column doesn\'t exist')
-            return
-        self.add_undo('ac', (column, self.grid.column_items(column)))
-        for item in self.grid.column_items(column):
-            item.remove()
-        self.grid.remove_column(column)
-        del self.column_widths[column]
-        self.update_cell_pos()
-        self.update_lines()
-        self.update_plotline_lines()
-        self.remove_column_number()
-
-
-    # ==== MOVE ======================================================
-
+    # ======== MOVE ==========================================================
     def move_plotline(self, oldpos, newpos):
-        if self.horizontal_time:
-            self.move_row(oldpos, newpos)
-        else:
-            self.move_column(oldpos, newpos)
-        self.update_plotline_lines()
+        self._move(oldpos, newpos, 'p')
 
     def move_timeslot(self, oldpos, newpos):
-        if self.horizontal_time:
-            self.move_column(oldpos, newpos)
+        self._move(oldpos, newpos, 't')
+
+    def _move(self, oldpos, newpos, arg):
+        foldpos, fnewpos = _fix_movepos(oldpos, newpos)
+        if self.do_row(arg):
+            self.add_undo('mr', (oldpos, newpos))
+            self.grid.move_row(foldpos, fnewpos)
         else:
-            self.move_row(oldpos, newpos)
+            self.add_undo('mc', (oldpos, newpos))
+            self.grid.move_col(foldpos, fnewpos)
+        self.draw_scene()
 
-    def _fix_movepos(self, oldpos, newpos):
-        if newpos == '+':
-            newpos = oldpos + 1
-        elif newpos == '-':
-            newpos = max(oldpos-1, 1)
-        elif oldpos < int(newpos):
-            newpos = max(int(newpos) - 1, 1)
-        return oldpos, int(newpos)
+    # ======== REMOVE ========================================================
+    def remove_plotline(self, pos):
+        self._remove(pos, 'p')
 
-    def move_row(self, oldpos, newpos):
-        if not oldpos in range(1, self.grid.count_rows()):
-            self.error('Row doesn\'t exist')
-            return
-        oldpos, newpos = self._fix_movepos(oldpos, newpos)
-        self.grid.move_row(oldpos, newpos)
-        row = self.row_heights.pop(oldpos)
-        self.row_heights.insert(newpos, row)
-        self.update_cell_pos()
-        self.update_numbers()
-        self.add_undo('mr', (newpos, oldpos))
+    def remove_timeslot(self, pos):
+        self._remove(pos, 't')
 
-    def move_column(self, oldpos, newpos):
-        if not oldpos in range(1, self.grid.count_columns()):
-            self.error('Column doesn\'t exist')
-            return
-        oldpos, newpos = self._fix_movepos(oldpos, newpos)
-        self.grid.move_column(oldpos, newpos)
-        column = self.column_widths.pop(oldpos)
-        self.column_widths.insert(newpos, column)
-        self.update_cell_pos()
-        self.update_numbers()
-        self.add_undo('mc', (newpos, oldpos))
-
-
-    # ======= CELL HANDLING =============================================
-
-    def edit_cell(self, column, row, text): # yes, that's the correct order
-        if column not in range(self.grid.count_columns()):
-            self.error('Column doesn\'t exist')
-        elif row not in range(self.grid.count_rows()):
-            self.error('Row doesn\'t exist')
-        elif not text:
-            oldtext = self.grid.item(row, column).text()
-            self.prompt('e{} {} {}'.format(column, row, oldtext))
+    def _remove(self, pos, arg):
+        if self.do_row(arg):
+            self.add_undo('rr', (pos, self.grid.row_items(pos)))
+            self.grid.remove_row(pos)
         else:
-            item = self.grid.item(row, column)
-            if not item.is_visible():
-                self.add_undo('c', (column, row))
+            self.add_undo('rc', (pos, self.grid.col_items(pos)))
+            self.grid.remove_col(pos)
+        self.draw_scene()
+
+    # ======== CELLS =========================================================
+    def edit_cell(self, x, y, text):
+        if not text:
+            self.prompt('e{} {} {}'.format(x, y, self.grid.item(x,y)[0]))
+            return
+        self.add_undo('e', (x, y, self.grid.item(x,y)))
+        self.set_cell(x, y, text, self.font_data['def'])
+        self.draw_scene()
+
+    def clear_cell(self, x, y):
+        self.add_undo('e', (x, y, self.grid.item(x,y)))
+        self.grid.clear_item(x, y)
+        self.draw_scene()
+
+    def set_cell(self, x, y, name, font_data):
+        size = font_data[1].boundingRect(0,0,150,10000,Qt.TextWordWrap,name).size()
+        self.grid.set_item(x, y, name, (size.width(), size.height()))
+
+    # ======== UNDO ==========================================================
+    def add_undo(self, cmd, arg):
+        self.modified_flag = True
+        self.undo_stack.append((cmd, arg))
+
+    def undo(self):
+        if not self.undo_stack:
+            self.error('Nothing to undo')
+            return
+        cmd, arg = self.undo_stack.pop()
+        if cmd == 'e':
+            x, y, item = arg
+            self.grid.set_item(x, y, *item)
+        elif cmd[0] == 'm':
+            old, new = _fix_movepos(*arg)
+            if cmd[1] == 'r':
+                self.grid.move_row(new, old)
             else:
-                self.add_undo('e', (row, column, self.grid.item(row, column).text()))
-            self.set_cell(row, column, text)
-
-    def clear_cell(self, column, row, add_undo=True):
-        if column not in range(self.grid.count_columns()):
-            self.error('Column doesn\'t exist')
-        elif row not in range(self.grid.count_rows()):
-            self.error('Row doesn\'t exist')
+                self.grid.move_col(new, old)
+        elif cmd[0] == 'i':
+            if cmd[1] == 'r':
+                self.grid.remove_row(arg)
+            else:
+                self.grid.remove_col(arg)
+        elif cmd[0] == 'r':
+            pos, arr = arg
+            if cmd[1] == 'r':
+                self.grid.add_row(pos)
+                for n, item in enumerate(arr):
+                    self.grid.set_item(n, pos, *item)
+            else:
+                self.grid.add_col(pos)
+                for n, item in enumerate(arr):
+                    self.grid.set_item(pos, n, *item)
+        elif cmd == 'flip':
+            self.grid.flip_orientation()
+            self.horizontal_time = not self.horizontal_time
         else:
-            if add_undo:
-                self.add_undo('e', (row, column, self.grid.item(row, column).text()))
-            self.grid.clear_item(row, column)
-            self.update_cell_size(row, column)
-            self.update_cell_pos()
-            self.update_plotline_lines()
-            self.update_numbers()
-
-    def set_cell(self, row, column, text, header=False):
-        text = text.replace('\\n', '\n')
-        if header:
-            size = self.header_fm.size(0, text)
-        else:
-            size = self.fm.size(0, text)
-        x = self.border + sum(self.column_widths[:column])
-        y = self.border + sum(self.row_heights[:row])
-        if header:
-            font = self.header_font
-        else:
-            font = None
-        self.grid.set_item(row, column, text, font, size, x, y)
-
-        self.update_cell_size(row, column)
-        self.update_cell_pos()
-        self.update_plotline_lines()
-        self.update_numbers()
-
-
-    def update_cell_size(self, row, column):
-        self.row_heights[row] = max(x.height() for x in self.grid.row_items(row)) + self.rowpadding
-        self.column_widths[column] = max(x.width() for x in self.grid.column_items(column)) + self.colpadding
-        self.update_lines()
-
-    def update_cell_pos(self):
-        for r in range(self.grid.count_rows()):
-            for c in range(self.grid.count_columns()):
-                item = self.grid.item(r,c)
-                item.set_pos(self.col_x(c), self.row_y(r))
-
-
-    # ======= LINES =====================================================
-
-    def update_lines(self):
-        hy = self.border + self.row_heights[0] - self.rowpadding/2
-        vx = self.border + self.column_widths[0] - self.colpadding/2
-        self.hline.setLine(0,hy,self.border + sum(self.column_widths),hy)
-        self.vline.setLine(vx,0,vx,self.border + sum(self.row_heights))
-
-
-    # ======= PLOTLINE LINES ============================================
-
-    def _set_plotline_line_pos(self, line, pos):
-        if self.horizontal_time:
-            y = self.row_y(pos)
-            line.setLine(self.border+self.column_widths[0], y, self.border+sum(self.column_widths), y)
-        else:
-            x = self.col_x(pos)
-            line.setLine(x, self.border+self.row_heights[0], x, self.border+sum(self.row_heights))
-
-    def add_plotline_line(self, pos):
-        pen = QPen(QBrush(QColor('#444')), 5, cap=Qt.RoundCap)
-        line = self.addLine(0,0,0,0,pen)
-        self._set_plotline_line_pos(line, pos)
-        line.setZValue(-10)
-        self.plotline_lines.insert(pos, line)
-
-    def update_plotline_lines(self):
-        for n, line in enumerate(self.plotline_lines):
-            if line is None: continue
-            self._set_plotline_line_pos(line, n)
-
-
-    # ======= NUMBERS ===================================================
-
-    def add_row_number(self):
-        self._add_number(self.row_numbers)
-
-    def add_column_number(self):
-        self._add_number(self.column_numbers)
-
-    def _add_number(self, arr):
-        num = self.addSimpleText(str(len(arr)))
-        arr.append(num)
-        self.update_numbers()
-
-    def remove_row_number(self):
-        self._remove_number(self.row_numbers)
-
-    def remove_column_number(self):
-        self._remove_number(self.column_numbers)
-
-    def _remove_number(self, arr):
-        self.removeItem(arr[-1])
-        del arr[-1]
-        self.update_numbers()
-
-    def update_numbers(self):
-        for n, item in enumerate(self.row_numbers):
-            if not n: continue
-            item.setPos(4, self.row_y(n)-item.boundingRect().height()/2)
-        for n, item in enumerate(self.column_numbers):
-            if not n: continue
-            item.setPos(self.col_x(n)-item.boundingRect().width()/2, 4)
+            self.error('Unknown undo: ' + cmd)
+            return
+        self.draw_scene()
 
 
     # ======= FILE HANDLING =============================================
 
     def is_modified(self):
-        return False #TODO
+        return self.modified_flag
 
     def dirty_window_and_start_in_new_process(self):
         return False #TODO
 
     def post_new(self):
-        self.clear_scene()
+        self.undo_stack = []
+        self.modified_flag = False
+        self.grid.clear()
+        self.draw_scene()
 
     def open_file(self, filename):
         text_matrix = []
@@ -459,7 +280,26 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
             for row in reader:
                 text_matrix.append(row)
 
+        if text_matrix[0] in (['HORIZONTAL TIME'], ['VERTICAL TIME']):
+            if text_matrix[0] == ['HORIZONTAL TIME']:
+                self.horizontal_time = True
+            elif text_matrix[0] == ['VERTICAL TIME']:
+                self.horizontal_time = False
+            del text_matrix[0]
 
+        self.grid.clear()
+        for _ in range(len(text_matrix)-1):
+            self.grid.add_row()
+        for _ in range(len(text_matrix[0])-1):
+            self.grid.add_col()
+        for rown, row in enumerate(text_matrix):
+            for coln, text in enumerate(row):
+                font = 'def'
+                if rown == 0 or coln == 0:
+                    font = 'bold'
+                self.set_cell(coln, rown, text, self.font_data[font])
+
+        self.draw_scene()
         return True
 
     def write_file(self, filename):
@@ -471,8 +311,14 @@ class Scene(QtGui.QGraphicsScene, FileHandler):
                 writer.writerow([x.text() for x in self.grid.row_items(row)])
 
     def post_save(self, saved_filename):
-        pass
+        self.modified_flag = False
 
 
-if __name__ == '__main__':
-    s = Scene()
+def _fix_movepos(oldpos, newpos):
+    if newpos == '+':
+        newpos = oldpos + 1
+    elif newpos == '-':
+        newpos = max(oldpos-1, 1)
+    elif oldpos < int(newpos):
+        newpos = max(int(newpos) - 1, 1)
+    return oldpos, int(newpos)

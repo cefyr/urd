@@ -25,6 +25,7 @@ class Terminal(GenericTerminal):
     clear_cell = pyqtSignal(int, int)
 
     undo = pyqtSignal(str)
+    set_time_orientation = pyqtSignal(str)
 
 
     def __init__(self, parent):
@@ -39,6 +40,7 @@ class Terminal(GenericTerminal):
             'e': (self.cmd_edit_cell, 'Edit cell (e[COL] [ROW] [TEXT])'),
             'c': (self.cmd_clear_cell, 'Clear cell (c[COL] [ROW])'),
             'u': (self.undo, 'Undo'),
+            't': (self.set_time_orientation, 'Time orientation (t[hv])'),
             'o': (self.cmd_open, 'Open [file]'),
             'n': (self.cmd_new, 'Open new file'),
             's': (self.cmd_save, 'Save (as) [file]'),
