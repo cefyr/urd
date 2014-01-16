@@ -313,7 +313,7 @@ class Scene(QtGui.QWidget, FileHandler):
             writer = csv.writer(f, dialect='unix', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([direction])
             for row in range(self.grid.count_rows()):
-                writer.writerow([x.text() for x in self.grid.row_items(row)])
+                writer.writerow([x[0] for x in self.grid.row_items(row)])
 
     def post_save(self, saved_filename):
         self.modified_flag = False
