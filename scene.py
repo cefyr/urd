@@ -162,7 +162,7 @@ class Scene(QtGui.QWidget, FileHandler):
             self.grid.add_col(pos)
             x, y = pos, 0
             self.add_undo('ic', pos)
-        self.set_cell(x, y, name, self.font_data['bold'])
+        self.set_cell(x, y, name)
         self.draw_scene()
 
 
@@ -205,7 +205,7 @@ class Scene(QtGui.QWidget, FileHandler):
             self.prompt('e{} {} {}'.format(x, y, self.grid.item(x,y)[0]))
             return
         self.add_undo('e', (x, y, self.grid.item(x,y)))
-        self.set_cell(x, y, text, self.font_data['def'])
+        self.set_cell(x, y, text)
         self.draw_scene()
 
     def clear_cell(self, x, y):
@@ -213,8 +213,15 @@ class Scene(QtGui.QWidget, FileHandler):
         self.grid.clear_item(x, y)
         self.draw_scene()
 
-    def set_cell(self, x, y, name, font_data):
-        size = font_data[1].boundingRect(0,0,150,10000,Qt.TextWordWrap,name).size()
+    def set_cell(self, x, y, name):
+        if x == 0 and y == 0:
+            self.error('Can\'t edit cell 0,0!')
+            return
+        if x == 0 or y == 0:
+            fd = 'bold'
+        else:
+            fd = 'def'
+        size = self.font_data[fd][1].boundingRect(0,0,150,10000,Qt.TextWordWrap,name).size()
         self.grid.set_item(x, y, name, (size.width(), size.height()))
 
     # ======== UNDO ==========================================================
@@ -296,10 +303,7 @@ class Scene(QtGui.QWidget, FileHandler):
             self.grid.add_col()
         for rown, row in enumerate(text_matrix):
             for coln, text in enumerate(row):
-                font = 'def'
-                if rown == 0 or coln == 0:
-                    font = 'bold'
-                self.set_cell(coln, rown, text, self.font_data[font])
+                self.set_cell(coln, rown, text)
         self.draw_scene()
 
         self.file_path = filename
