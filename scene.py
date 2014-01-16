@@ -303,6 +303,8 @@ class Scene(QtGui.QWidget, FileHandler):
             self.grid.add_col()
         for rown, row in enumerate(text_matrix):
             for coln, text in enumerate(row):
+                if coln == 0 and rown == 0:
+                    continue
                 self.set_cell(coln, rown, text)
         self.draw_scene()
 
