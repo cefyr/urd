@@ -25,7 +25,7 @@ class MainWindow(QtGui.QFrame):
 
         scene_container.setWidget(self.scene)
 
-        self.terminal = Terminal(self)
+        self.terminal = Terminal(self, lambda: self.scene.file_path)
         layout.addWidget(self.terminal)
 
         self.connect_signals(self.scene, self.terminal)

@@ -24,6 +24,7 @@ class Scene(QtGui.QWidget, FileHandler):
 
         self.horizontal_time = False
         self.modified_flag = False
+        self.file_path = ''
 
         self.grid = Matrix()
         self.undo_stack = []
@@ -272,6 +273,7 @@ class Scene(QtGui.QWidget, FileHandler):
         self.modified_flag = False
         self.grid.clear()
         self.draw_scene()
+        self.file_path = ''
 
     def open_file(self, filename):
         text_matrix = []
@@ -298,8 +300,11 @@ class Scene(QtGui.QWidget, FileHandler):
                 if rown == 0 or coln == 0:
                     font = 'bold'
                 self.set_cell(coln, rown, text, self.font_data[font])
-
         self.draw_scene()
+
+        self.file_path = filename
+        self.undo_stack = []
+        self.modified_flag = False
         return True
 
     def write_file(self, filename):
@@ -312,6 +317,7 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def post_save(self, saved_filename):
         self.modified_flag = False
+        self.file_path = saved_filename
 
 
 def _fix_movepos(oldpos, newpos):

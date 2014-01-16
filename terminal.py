@@ -1,3 +1,4 @@
+import os
 import os.path
 import re
 
@@ -28,8 +29,10 @@ class Terminal(GenericTerminal):
     set_time_orientation = pyqtSignal(str)
 
 
-    def __init__(self, parent):
+    def __init__(self, parent, get_filepath):
         super().__init__(parent, GenericTerminalInputBox, GenericTerminalOutputBox)
+
+        self.get_filepath = get_filepath
 
         self.commands = {
             '?': (self.cmd_help, 'List commands or help for [command]'),
@@ -47,6 +50,44 @@ class Terminal(GenericTerminal):
             'q': (self.cmd_quit, 'Quit')
         }
 
+
+    # ==== Autocomplete ========================== #
+
+    def autocomplete(self):
+        """
+        Main autocomplete functions.
+        Is called whenever tab is pressed.
+        """
+        text = self.input_term.text()
+        rx = re.match(r'([os]!?)\s*(.*)', text)
+        if not rx:
+            return
+        cmdprefix, ac_text = rx.groups()
+
+        # Autocomplete with the working directory if the line is empty
+        if not ac_text:
+            wd = os.path.abspath(self.get_filepath())
+            if not os.path.isdir(wd):
+                wd = os.path.dirname(wd)
+            self.prompt(cmdprefix + ' ' + wd + os.path.sep)
+            return
+
+        autocompleted_text = self.run_autocompletion(ac_text)
+        self.prompt(cmdprefix + ' ' + autocompleted_text)
+
+
+    def get_ac_suggestions(self, path):
+        """
+        Return a list of all possible paths that starts with the
+        provided path.
+        All directories are suffixed with a / or \ depending on os.
+        """
+        dirpath, namepart = os.path.split(path)
+        if not os.path.isdir(dirpath):
+            return []
+        suggestions = [os.path.join(dirpath, p) for p in sorted(os.listdir(dirpath))
+                       if p.lower().startswith(namepart.lower())]
+        return [p + (os.path.sep*os.path.isdir(p)) for p in suggestions]
 
 
     # ==== Commands ============================== #
