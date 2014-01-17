@@ -34,20 +34,6 @@ class Scene(QtGui.QWidget, FileHandler):
         self.font_data = {'def': (font, QtGui.QFontMetrics(font)),
                           'bold': (boldfont, QtGui.QFontMetrics(boldfont))}
 
-        # DEBUG
-        self.insert_plotline(1, "This function does not handle the newline character (\\n), as it cannot break text into multiple lines, and it cannot display the newline character. Use the QPainter.drawText() overload that takes a rectangle instead if you want to draw multiple lines of text with the newline character, or if you want the text to be wrapped.")
-        self.add_timeslot("HEI")
-        self.add_timeslot("HE2")
-        self.add_timeslot("HE3")
-        self.add_timeslot("HE4")
-        self.add_timeslot("HE5")
-        self.remove_timeslot(3)
-
-        self.add_timeslot("neee")
-        self.edit_cell(1,1,"VA?\nHE\n \nHEHE")
-        # self.move_timeslot(8,0)
-        # END DEBUG
-
         self.draw_scene()
 
 
