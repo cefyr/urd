@@ -221,6 +221,7 @@ class Scene(QtGui.QWidget, FileHandler):
             fd = 'bold'
         else:
             fd = 'def'
+        name = name.replace('\\n','\n')
         size = self.font_data[fd][1].boundingRect(0,0,150,10000,Qt.TextWordWrap,name).size()
         self.grid.set_item(x, y, name, (size.width(), size.height()))
 
