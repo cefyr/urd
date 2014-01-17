@@ -11,7 +11,7 @@ from terminal import Terminal
 class MainWindow(QtGui.QFrame):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Urd')
+        self.setWindowTitle('New file')
 
         self.force_quit_flag = False
 
@@ -62,6 +62,7 @@ class MainWindow(QtGui.QFrame):
             (term.clear_cell, scene.clear_cell),
             (term.undo, scene.undo),
             (term.set_time_orientation, scene.set_time_orientation),
+            (scene.window_title_changed, self.setWindowTitle),
 
             # Terminal actions
             (scene.prompt_sig, term.prompt),

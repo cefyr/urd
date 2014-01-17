@@ -18,6 +18,7 @@ class Scene(QtGui.QWidget, FileHandler):
     print_ = pyqtSignal(str)
     error_sig = pyqtSignal(str)
     prompt_sig = pyqtSignal(str)
+    window_title_changed = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -214,6 +215,7 @@ class Scene(QtGui.QWidget, FileHandler):
     # ======== UNDO ==========================================================
     def add_undo(self, cmd, arg):
         self.modified_flag = True
+        self.update_title()
         self.undo_stack.append((cmd, arg))
 
     def undo(self):
@@ -253,9 +255,16 @@ class Scene(QtGui.QWidget, FileHandler):
             return
         self.draw_scene()
 
+    # ======= FILE NAME =================================================
+    def update_title(self):
+        title = '{0}{1}{0}'.format('*'*self.modified_flag, self.file_path or 'New file')
+        self.window_title_changed.emit(title)
+
+    def set_filename(self, filename=''):
+        self.file_path = filename
+        self.update_title()
 
     # ======= FILE HANDLING =============================================
-
     def is_modified(self):
         return self.modified_flag
 
@@ -264,10 +273,10 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def post_new(self):
         self.undo_stack = []
-        self.modified_flag = False
         self.grid.clear()
         self.draw_scene()
-        self.file_path = ''
+        self.modified_flag = False
+        self.set_filename()
 
     def open_file(self, filename):
         text_matrix = []
@@ -295,9 +304,9 @@ class Scene(QtGui.QWidget, FileHandler):
                 self.set_cell(coln, rown, text)
         self.draw_scene()
 
-        self.file_path = filename
-        self.undo_stack = []
         self.modified_flag = False
+        self.set_filename(filename)
+        self.undo_stack = []
         return True
 
     def write_file(self, filename):
@@ -311,7 +320,7 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def post_save(self, saved_filename):
         self.modified_flag = False
-        self.file_path = saved_filename
+        self.set_filename(saved_filename)
 
 
 def _fix_movepos(oldpos, newpos):
