@@ -9,7 +9,7 @@ from scene import Scene
 from terminal import Terminal
 
 class MainWindow(QtGui.QFrame):
-    def __init__(self):
+    def __init__(self, file_to_open=''):
         super().__init__()
         self.setWindowTitle('New file')
 
@@ -29,6 +29,9 @@ class MainWindow(QtGui.QFrame):
         layout.addWidget(self.terminal)
 
         self.connect_signals(self.scene, self.terminal)
+
+        if file_to_open:
+            self.scene.open_file(file_to_open)
 
         self.show()
 
@@ -80,14 +83,25 @@ class MainWindow(QtGui.QFrame):
 
 
 def main():
-    import sys
-    # import argparse
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('profile', nargs='?')
-    # args = parser.parse_args()
+    import argparse, os.path, subprocess, sys
+    parser = argparse.ArgumentParser()
 
-    app = QtGui.QApplication(sys.argv)
-    window = MainWindow()
+    def valid_file(fname):
+        if os.path.isfile(fname):
+            return fname
+        parser.error('File does not exist: {}'.format(fname))
+
+    parser.add_argument('files', nargs='*', type=valid_file)
+    args = parser.parse_args()
+
+    app = QtGui.QApplication([])
+    if not args.files:
+        window = MainWindow()
+    else:
+        window = MainWindow(file_to_open=args.files[0])
+        for f in args.files[1:]:
+            subprocess.Popen([sys.executable, sys.argv[0], f.encode('utf-8')])
+
     app.setActiveWindow(window)
     sys.exit(app.exec_())
 

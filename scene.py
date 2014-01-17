@@ -311,7 +311,7 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def write_file(self, filename):
         direction = 'HORIZONTAL TIME' if self.horizontal_time else 'VERTICAL TIME'
-        first_row = [direction] + self.grid.row_items(0)[1:]
+        first_row = [direction] + [x[0] for x in self.grid.row_items(0)[1:]]
         with open(filename, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f, dialect='unix', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(first_row)
