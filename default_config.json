@@ -1,0 +1,12 @@
+{
+  "theme": {
+    "border": 16,
+    "font": "Serif",
+    "font size": 10,
+    "background": "#222",
+    "cell border": "#111",
+    "cell background": "#ddd",
+    "details": "#000",
+    "text color": "#222"
+  }
+}

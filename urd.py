@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os.path
+
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
@@ -15,13 +17,16 @@ class MainWindow(QtGui.QFrame):
 
         self.force_quit_flag = False
 
+        self.config = read_config()
+        self.setStyleSheet('background: '+self.config['theme']['background'])
+
         layout = QtGui.QVBoxLayout(self)
         common.kill_theming(layout)
 
         scene_container = QtGui.QScrollArea(self)
         layout.addWidget(scene_container, stretch=1)
 
-        self.scene = Scene()
+        self.scene = Scene(self.config)
 
         scene_container.setWidget(self.scene)
 
@@ -82,8 +87,14 @@ class MainWindow(QtGui.QFrame):
             signal.connect(slot)
 
 
+def read_config():
+    config_file = os.path.join(os.getenv('HOME'), '.config', 'urd', 'urd.conf')
+    common.make_sure_config_exists(config_file, common.local_path('default_config.json'))
+    return common.read_json(config_file)
+
+
 def main():
-    import argparse, os.path, subprocess, sys
+    import argparse, subprocess, sys
     parser = argparse.ArgumentParser()
 
     def valid_file(fname):

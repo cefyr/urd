@@ -11,18 +11,15 @@ from libsyntyche.filehandling import FileHandler
 from matrix import Matrix
 
 
-
-
-
 class Scene(QtGui.QWidget, FileHandler):
     print_ = pyqtSignal(str)
     error_sig = pyqtSignal(str)
     prompt_sig = pyqtSignal(str)
     window_title_changed = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
-
+        self.theme = config['theme']
         self.horizontal_time = False
         self.modified_flag = False
         self.file_path = ''
@@ -30,8 +27,9 @@ class Scene(QtGui.QWidget, FileHandler):
         self.grid = Matrix()
         self.undo_stack = []
 
-        font = QtGui.QFont('Serif', 10)
-        boldfont = QtGui.QFont('Serif', 10, weight=QtGui.QFont.Bold)
+        font = QtGui.QFont(self.theme['font'], self.theme['font size'])
+        boldfont = QtGui.QFont(self.theme['font'], self.theme['font size'],
+                               weight=QtGui.QFont.Bold)
         self.font_data = {'def': (font, QtGui.QFontMetrics(font)),
                           'bold': (boldfont, QtGui.QFontMetrics(boldfont))}
 
@@ -43,7 +41,7 @@ class Scene(QtGui.QWidget, FileHandler):
         painter.drawPixmap(0,0,self.scene_image)
 
     def draw_scene(self):
-        border = 24
+        border = self.theme['border']
         row_padding, col_padding = 20, 20
         row_heights = [max([x[1][1] for x in self.grid.row_items(row) if x[0]] + [0]) + row_padding
                        for row in range(self.grid.count_rows())]
@@ -55,13 +53,16 @@ class Scene(QtGui.QWidget, FileHandler):
         self.scene_image = QtGui.QPixmap(width, height)
 
         # Begin paint
-        self.scene_image.fill(QColor('#666'))
+        self.scene_image.fill(QColor(self.theme['background']))
         painter = QtGui.QPainter(self.scene_image)
+        painter.setRenderHints(QtGui.QPainter.Antialiasing | QtGui.QPainter.TextAntialiasing)
         painter.setFont(self.font_data['def'][0])
+        painter.setBrush(QColor(self.theme['cell background']))
 
         # Draw header lines
         hy = int(border + row_heights[0])
         vx = int(border + col_widths[0])
+        painter.setPen(QColor(self.theme['details']))
         painter.drawLine(0, hy, border + sum(col_widths), hy)
         painter.drawLine(vx, 0, vx, border + sum(row_heights))
 
@@ -83,6 +84,7 @@ class Scene(QtGui.QWidget, FileHandler):
             painter.fillRect(border + x, border + y, w, h, QColor('black'))
 
         # Draw cells
+        painter.setPen(QColor(self.theme['cell border']))
         for r in range(self.grid.count_rows()):
             for c in range(self.grid.count_cols()):
                 text, size = self.grid.item(c,r)
@@ -93,8 +95,7 @@ class Scene(QtGui.QWidget, FileHandler):
                     painter.setFont(self.font_data['def'][0])
                 x = border + sum(col_widths[:c]) + col_widths[c]/2 - size[0]/2
                 y = border + sum(row_heights[:r]) + row_heights[r]/2 - size[1]/2
-                painter.fillRect(x-2, y-2, size[0]+4, size[1]+4, QColor('#ccc'))
-                painter.drawRect(x-3, y-3, size[0]+5, size[1]+5)
+                painter.drawRoundedRect(x-3, y-3, size[0]+6, size[1]+6, 5, 5)
                 painter.drawText(x, y, size[0], size[1], Qt.TextWordWrap, text)
 
         painter.end()
