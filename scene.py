@@ -289,12 +289,12 @@ class Scene(QtGui.QWidget, FileHandler):
             for row in reader:
                 text_matrix.append(row)
 
-        if text_matrix[0] in (['HORIZONTAL TIME'], ['VERTICAL TIME']):
-            if text_matrix[0] == ['HORIZONTAL TIME']:
+        if text_matrix[0][0] in ('HORIZONTAL TIME', 'VERTICAL TIME'):
+            if text_matrix[0][0] == ['HORIZONTAL TIME']:
                 self.horizontal_time = True
-            elif text_matrix[0] == ['VERTICAL TIME']:
+            elif text_matrix[0][0] == ['VERTICAL TIME']:
                 self.horizontal_time = False
-            del text_matrix[0]
+            text_matrix[0][0] = ''
 
         self.grid.clear()
         for _ in range(len(text_matrix)-1):
@@ -315,10 +315,11 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def write_file(self, filename):
         direction = 'HORIZONTAL TIME' if self.horizontal_time else 'VERTICAL TIME'
+        first_row = [direction] + self.grid.row_items(0)[1:]
         with open(filename, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f, dialect='unix', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([direction])
-            for row in range(self.grid.count_rows()):
+            writer.writerow(first_row)
+            for row in list(range(self.grid.count_rows()))[1:]:
                 writer.writerow([x[0] for x in self.grid.row_items(row)])
 
     def post_save(self, saved_filename):
