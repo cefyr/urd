@@ -26,7 +26,9 @@ class MainWindow(QtGui.QFrame):
         scene_container = QtGui.QScrollArea(self)
         layout.addWidget(scene_container, stretch=1)
 
-        self.scene = Scene(self.config)
+        self.scene = Scene(self.config,
+                scene_container.horizontalScrollBar().value,
+                scene_container.verticalScrollBar().value)
 
         scene_container.setWidget(self.scene)
 

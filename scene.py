@@ -17,9 +17,13 @@ class Scene(QtGui.QWidget, FileHandler):
     prompt_sig = pyqtSignal(str)
     window_title_changed = pyqtSignal(str)
 
-    def __init__(self, config):
+    def __init__(self, config, get_hsbar_pos, get_vsbar_pos):
         super().__init__()
         self.theme = config['theme']
+
+        self.get_hsbar_pos = get_hsbar_pos
+        self.get_vsbar_pos = get_vsbar_pos
+
         self.horizontal_time = False
         self.modified_flag = False
         self.file_path = ''
@@ -38,7 +42,11 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def paintEvent(self, ev):
         painter = QtGui.QPainter(self)
-        painter.drawPixmap(0,0,self.scene_image)
+        painter.drawPixmap(0, 0, self.scene_image)
+        rx, ry = self.get_hsbar_pos(), self.get_vsbar_pos()
+        painter.drawPixmap(0, ry, self.header_row)
+        painter.drawPixmap(rx, 0, self.header_col)
+        painter.drawPixmap(rx, ry, self.corner)
 
     def draw_scene(self):
         border = self.theme['border']
@@ -99,6 +107,14 @@ class Scene(QtGui.QWidget, FileHandler):
                 painter.drawText(x, y, size[0], size[1], Qt.TextWordWrap, text)
 
         painter.end()
+
+        hw = border + col_widths[0]
+        hh = border + row_heights[0]
+
+        self.header_row = self.scene_image.copy(0,0, width, hh)
+        self.header_col = self.scene_image.copy(0,0, hw, height)
+
+        self.corner = self.scene_image.copy(0,0, hw, hh)
 
         self.resize(width, height)
         self.update()
