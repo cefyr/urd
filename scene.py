@@ -49,9 +49,9 @@ class Scene(QtGui.QWidget, FileHandler):
     def draw_scene(self):
         border = self.theme['border']
         row_padding, col_padding = 20, 20
-        row_heights = [max([x[1][1] for x in self.grid.row_items(row) if x[0]] + [0]) + row_padding
+        row_heights = [max([x[1][1] for x in self.grid.row(row) if x[0]] + [0]) + row_padding
                        for row in range(self.grid.count_rows())]
-        col_widths = [max([x[1][0] for x in self.grid.col_items(col) if x[0]] + [0]) + col_padding
+        col_widths = [max([x[1][0] for x in self.grid.col(col) if x[0]] + [0]) + col_padding
                       for col in range(self.grid.count_cols())]
 
         width = sum(col_widths) + border
@@ -93,7 +93,7 @@ class Scene(QtGui.QWidget, FileHandler):
         painter.setPen(QColor(self.theme['cell border']))
         for r in range(self.grid.count_rows()):
             for c in range(self.grid.count_cols()):
-                text, size = self.grid.item(c,r)
+                text, size = self.grid[c,r]
                 if not text: continue
                 if c == 0 or r == 0:
                     painter.setFont(self.font_data['bold'][0])
@@ -209,13 +209,13 @@ class Scene(QtGui.QWidget, FileHandler):
             if (0,pos) not in self.grid:
                 self.error('Invalid row')
                 return
-            self.add_undo('rr', (pos, self.grid.row_items(pos)))
+            self.add_undo('rr', (pos, self.grid.row(pos)))
             self.grid.remove_row(pos)
         else:
             if (pos,0) not in self.grid:
                 self.error('Invalid column')
                 return
-            self.add_undo('rc', (pos, self.grid.col_items(pos)))
+            self.add_undo('rc', (pos, self.grid.col(pos)))
             self.grid.remove_col(pos)
         self.draw_scene()
 
@@ -225,9 +225,9 @@ class Scene(QtGui.QWidget, FileHandler):
             self.error('Invalid coordinate')
             return
         if not text:
-            self.prompt('e{} {} {}'.format(x, y, self.grid.item(x,y)[0]))
+            self.prompt('e{} {} {}'.format(x, y, self.grid[x,y][0]))
             return
-        self.add_undo('e', (x, y, self.grid.item(x,y)))
+        self.add_undo('e', (x, y, self.grid[x,y]))
         self.set_cell(x, y, text)
         self.draw_scene()
 
@@ -235,8 +235,8 @@ class Scene(QtGui.QWidget, FileHandler):
         if (x,y) not in self.grid:
             self.error('Invalid coordinate')
             return
-        self.add_undo('e', (x, y, self.grid.item(x,y)))
-        self.grid.clear_item(x, y)
+        self.add_undo('e', (x, y, self.grid[x,y]))
+        self.grid[x,y] = None
         self.draw_scene()
 
     def set_cell(self, x, y, name):
@@ -249,7 +249,7 @@ class Scene(QtGui.QWidget, FileHandler):
             fd = 'def'
         name = name.replace('\\n','\n')
         size = self.font_data[fd][1].boundingRect(0,0,150,10000,Qt.TextWordWrap,name).size()
-        self.grid.set_item(x, y, name, (size.width(), size.height()))
+        self.grid[x,y] = (name, (size.width(), size.height()))
 
     # ======== UNDO ==========================================================
     def add_undo(self, cmd, arg):
@@ -264,7 +264,7 @@ class Scene(QtGui.QWidget, FileHandler):
         cmd, arg = self.undo_stack.pop()
         if cmd == 'e':
             x, y, item = arg
-            self.grid.set_item(x, y, *item)
+            self.grid[x,y] = item
         elif cmd[0] == 'm':
             old, new = _fix_movepos(*arg)
             if cmd[1] == 'r':
@@ -281,11 +281,11 @@ class Scene(QtGui.QWidget, FileHandler):
             if cmd[1] == 'r':
                 self.grid.add_row(pos)
                 for n, item in enumerate(arr):
-                    self.grid.set_item(n, pos, *item)
+                    self.grid[n,pos] = item
             else:
                 self.grid.add_col(pos)
                 for n, item in enumerate(arr):
-                    self.grid.set_item(pos, n, *item)
+                    self.grid[pos,n] = item
         elif cmd == 'flip':
             self.grid.flip_orientation()
             self.horizontal_time = not self.horizontal_time
@@ -350,12 +350,12 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def write_file(self, filename):
         direction = 'HORIZONTAL TIME' if self.horizontal_time else 'VERTICAL TIME'
-        first_row = [direction] + [x[0] for x in self.grid.row_items(0)[1:]]
+        first_row = [direction] + [x[0] for x in self.grid.row(0)[1:]]
         with open(filename, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f, dialect='unix', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(first_row)
             for row in list(range(self.grid.count_rows()))[1:]:
-                writer.writerow([x[0] for x in self.grid.row_items(row)])
+                writer.writerow([x[0] for x in self.grid.row(row)])
 
     def post_save(self, saved_filename):
         self.modified_flag = False

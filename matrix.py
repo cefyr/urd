@@ -17,6 +17,19 @@ class Matrix():
         else:
             return False
 
+    def __getitem__(self, key):
+        x, y = key
+        return self.data[y][x]
+
+    def __setitem__(self, key, value):
+        x, y = key
+        if not value:
+            self.data[y][x] = default_item()
+            return
+        text, (w, h) = value
+        assert isinstance(text, str) and isinstance(w, int) and isinstance(h, int)
+        self.data[y][x] = value
+
 
     def clear(self):
         self.data = [[default_item()]]
@@ -60,17 +73,8 @@ class Matrix():
             x = self.data[n].pop(oldpos)
             self.data[n].insert(newpos, x)
 
-    def row_items(self, pos):
+    def row(self, pos):
         return self.data[pos]
 
-    def col_items(self, pos):
+    def col(self, pos):
         return [x[pos] for x in self.data]
-
-    def item(self, col, row):
-        return self.data[row][col]
-
-    def set_item(self, col, row, text, size):
-        self.data[row][col] = (text, size)
-
-    def clear_item(self, col, row):
-        self.data[row][col] = default_item()
