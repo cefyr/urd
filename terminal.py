@@ -28,6 +28,8 @@ class Terminal(GenericTerminal):
     undo = pyqtSignal(str)
     set_time_orientation = pyqtSignal(str)
 
+    give_up_focus = pyqtSignal()
+
 
     def __init__(self, parent, get_filepath):
         super().__init__(parent, GenericTerminalInputBox, GenericTerminalOutputBox)
@@ -49,6 +51,19 @@ class Terminal(GenericTerminal):
             's': (self.cmd_save, 'Save (as) [file]'),
             'q': (self.cmd_quit, 'Quit')
         }
+
+        self.hide()
+
+    def show(self):
+        super().show()
+        self.input_term.setFocus()
+
+    def toggle(self):
+        if self.input_term.hasFocus():
+            self.give_up_focus.emit()
+            self.hide()
+        else:
+            self.show()
 
 
     # ==== Autocomplete ========================== #

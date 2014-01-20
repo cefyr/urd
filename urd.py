@@ -37,6 +37,8 @@ class MainWindow(QtGui.QFrame):
 
         self.connect_signals(self.scene, self.terminal)
 
+        common.set_hotkey('Escape', self, self.terminal.toggle)
+
         if file_to_open:
             self.scene.open_file(file_to_open)
 
@@ -78,6 +80,7 @@ class MainWindow(QtGui.QFrame):
             (scene.prompt_sig, term.prompt),
             (scene.error_sig, term.error),
             (scene.print_, term.print_),
+            (term.give_up_focus, scene.setFocus),
 
             # File operations
             (term.request_new_file, scene.request_new_file),
