@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import csv
 
 from PyQt4 import QtGui, QtCore
