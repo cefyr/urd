@@ -157,10 +157,16 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def _insert(self, pos, name, arg):
         if self.do_row(arg):
+            if pos != -1 and (0,pos-1) not in self.grid:
+                self.error('Invalid row')
+                return
             self.grid.add_row(pos)
             x, y = 0, pos
             self.add_undo('ir', pos)
         else:
+            if pos != -1 and (pos-1,0) not in self.grid:
+                self.error('Invalid column')
+                return
             self.grid.add_col(pos)
             x, y = pos, 0
             self.add_undo('ic', pos)
@@ -178,9 +184,15 @@ class Scene(QtGui.QWidget, FileHandler):
     def _move(self, oldpos, newpos, arg):
         foldpos, fnewpos = _fix_movepos(oldpos, newpos)
         if self.do_row(arg):
+            if (0,oldpos) not in self.grid:
+                self.error('Invalid row')
+                return
             self.add_undo('mr', (oldpos, newpos))
             self.grid.move_row(foldpos, fnewpos)
         else:
+            if (oldpos,0) not in self.grid:
+                self.error('Invalid column')
+                return
             self.add_undo('mc', (oldpos, newpos))
             self.grid.move_col(foldpos, fnewpos)
         self.draw_scene()
@@ -194,15 +206,24 @@ class Scene(QtGui.QWidget, FileHandler):
 
     def _remove(self, pos, arg):
         if self.do_row(arg):
+            if (0,pos) not in self.grid:
+                self.error('Invalid row')
+                return
             self.add_undo('rr', (pos, self.grid.row_items(pos)))
             self.grid.remove_row(pos)
         else:
+            if (pos,0) not in self.grid:
+                self.error('Invalid column')
+                return
             self.add_undo('rc', (pos, self.grid.col_items(pos)))
             self.grid.remove_col(pos)
         self.draw_scene()
 
     # ======== CELLS =========================================================
     def edit_cell(self, x, y, text):
+        if (x,y) not in self.grid:
+            self.error('Invalid coordinate')
+            return
         if not text:
             self.prompt('e{} {} {}'.format(x, y, self.grid.item(x,y)[0]))
             return
@@ -211,6 +232,9 @@ class Scene(QtGui.QWidget, FileHandler):
         self.draw_scene()
 
     def clear_cell(self, x, y):
+        if (x,y) not in self.grid:
+            self.error('Invalid coordinate')
+            return
         self.add_undo('e', (x, y, self.grid.item(x,y)))
         self.grid.clear_item(x, y)
         self.draw_scene()
