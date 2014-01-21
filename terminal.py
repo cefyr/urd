@@ -22,6 +22,7 @@ class Terminal(GenericTerminal):
     move_timeslot = pyqtSignal(int, str)
     remove_plotline = pyqtSignal(int)
     remove_timeslot = pyqtSignal(int)
+    move_cell = pyqtSignal(int, int, int, int)
     edit_cell = pyqtSignal(int, int, str)
     clear_cell = pyqtSignal(int, int)
 
@@ -40,7 +41,7 @@ class Terminal(GenericTerminal):
             '?': (self.cmd_help, 'List commands or help for [command]'),
             'a': (self.cmd_add, 'Add plotline/timeslot (a[pt][NAME])'),
             'i': (self.cmd_insert, 'Insert plotline/timeslot (i[pt][POS] [NAME])'),
-            'm': (self.cmd_move, 'Move plotline/timeslot (m[pt][OLDPOS] [NEWPOS])'),
+            'm': (self.cmd_move, 'Move plotline/timeslot (m[cpt][OLD] [NEW])'),
             'r': (self.cmd_remove, 'Remove plotline/timeslot (r[pt][POS])'),
             'e': (self.cmd_edit_cell, 'Edit cell (e[COL] [ROW] [TEXT])'),
             'c': (self.cmd_clear_cell, 'Clear cell (c[COL] [ROW])'),
@@ -129,12 +130,16 @@ class Terminal(GenericTerminal):
 
     def cmd_move(self, arg):
         rx = re.match(r'([pt])([1-9]\d*) *( +[1-9]\d*|\+|-)', arg)
-        if not rx:
+        rxc = re.match(r'c([1-9]\d*) +([1-9]\d*) +([1-9]\d*) +([1-9]\d*)', arg)
+        if not rx and not rxc:
             self.error('Invalid move command')
-        elif rx.group(1) == 'p':
-            self.move_plotline.emit(int(rx.group(2)), rx.group(3).strip())
-        elif rx.group(1) == 't':
-            self.move_timeslot.emit(int(rx.group(2)), rx.group(3).strip())
+        elif rx:
+            if rx.group(1) == 'p':
+                self.move_plotline.emit(int(rx.group(2)), rx.group(3).strip())
+            elif rx.group(1) == 't':
+                self.move_timeslot.emit(int(rx.group(2)), rx.group(3).strip())
+        else:
+            self.move_cell.emit(*map(int, rxc.groups()))
 
     def cmd_remove(self, arg):
         rx = re.match(r'([pt])(\d+)', arg)

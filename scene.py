@@ -220,6 +220,15 @@ class Scene(QtGui.QWidget, FileHandler):
         self.draw_scene()
 
     # ======== CELLS =========================================================
+    def move_cell(self, x1, y1, x2, y2):
+        if not ((x1,y1) in self.grid and (x2,y2) in self.grid):
+            self.error('Invalid coordinates')
+            return
+        self.add_undo('mi', ((x1, y1, self.grid[x1,y1]), (x2, y2, self.grid[x2,y2])))
+        self.grid[x2,y2] = self.grid[x1,y1]
+        self.grid[x1,y1] = None
+        self.draw_scene()
+
     def edit_cell(self, x, y, text):
         if (x,y) not in self.grid:
             self.error('Invalid coordinate')
@@ -266,11 +275,18 @@ class Scene(QtGui.QWidget, FileHandler):
             x, y, item = arg
             self.grid[x,y] = item
         elif cmd[0] == 'm':
-            old, new = _fix_movepos(*arg)
             if cmd[1] == 'r':
+                old, new = _fix_movepos(*arg)
                 self.grid.move_row(new, old)
-            else:
+            elif cmd[1] == 'c':
+                old, new = _fix_movepos(*arg)
                 self.grid.move_col(new, old)
+            elif cmd[1] == 'i':
+                oldcell, newcell = arg
+                x1, y1, item1 = oldcell
+                x2, y2, item2 = newcell
+                self.grid[x1,y1] = item1
+                self.grid[x2,y2] = item2
         elif cmd[0] == 'i':
             if cmd[1] == 'r':
                 self.grid.remove_row(arg)

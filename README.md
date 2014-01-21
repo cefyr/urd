@@ -13,6 +13,7 @@ Commands
 * `i(p|t)<pos> <name>` – Insert plotline or timeslot at place `<pos>`.
 * `r(p|t)<name>` – Remove plotline or timeslot at place `<pos>`.
 * `m(p|t)<oldpos> <newpos>` – Move plotline or timeslot from place `<oldpos>` to just before what plotline/timeslot now is at place `<newpos>`.
+* `mc<x1> <y1> <x2> <y2>` – Move cell from `<x1>`,`<y1>` to `<x2>`,`<y2>`. Cells in row or column 0 can not be moved.
 
 ###Cells###
 * `e<x> <y>[ <text>]` – Set text in the cell at column `<x>` and row `<y>` to `<text>`. If `<text>` is omitted, the current text in the cell is printed in the terminal for your convenience.

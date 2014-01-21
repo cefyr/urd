@@ -70,6 +70,7 @@ class MainWindow(QtGui.QFrame):
             (term.move_timeslot, scene.move_timeslot),
             (term.remove_plotline, scene.remove_plotline),
             (term.remove_timeslot, scene.remove_timeslot),
+            (term.move_cell, scene.move_cell),
             (term.edit_cell, scene.edit_cell),
             (term.clear_cell, scene.clear_cell),
             (term.undo, scene.undo),
