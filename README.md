@@ -12,7 +12,7 @@ Commands
 * `a(p|t)<name>` – Add plotline or timeslot.
 * `i(p|t)<pos> <name>` – Insert plotline or timeslot at place `<pos>`.
 * `r(p|t)<name>` – Remove plotline or timeslot at place `<pos>`.
-* `m(p|t)<oldpos> <newpos>` – Move plotline or timeslot from place `<oldpos>` to just before what plotline/timeslot now is at place `<newpos>`.
+* `m(p|t)<oldpos> <newpos>` – Move plotline or timeslot from place `<oldpos>` to just before what plotline/timeslot now is at place `<newpos>`. If `<newpos>` is + or -, the timeslot/plotline will move one position forwards/backwards.
 * `mc<x1> <y1> <x2> <y2>` – Move cell from `<x1>`,`<y1>` to `<x2>`,`<y2>`. Cells in row or column 0 can not be moved.
 
 ###Cells###
