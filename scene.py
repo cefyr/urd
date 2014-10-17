@@ -101,7 +101,8 @@ class Scene(QtGui.QWidget, FileHandler):
                     painter.setFont(self.font_data['def'][0])
                 x = border + sum(col_widths[:c]) + col_widths[c]/2 - size[0]/2
                 y = border + sum(row_heights[:r]) + row_heights[r]/2 - size[1]/2
-                painter.drawRoundedRect(x-3, y-3, size[0]+6, size[1]+6, 5, 5)
+#                painter.drawRoundedRect(x-3, y-3, size[0]+6, size[1]+6, 5, 5)
+                painter.drawRect(x-3, y-3, size[0]+6, size[1]+6)
                 painter.drawText(x, y, size[0], size[1], Qt.TextWordWrap, text)
 
         painter.end()
