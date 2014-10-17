@@ -38,6 +38,10 @@ class MainWindow(QtGui.QFrame):
         self.connect_signals(self.scene, self.terminal)
 
         common.set_hotkey('Escape', self, self.terminal.toggle)
+        common.set_hotkey('Ctrl+N', self, self.scene.request_new_file)
+        common.set_hotkey('Ctrl+O', self, lambda:self.terminal.prompt('o '))
+        common.set_hotkey('Ctrl+S', self, self.scene.request_save_file)
+        common.set_hotkey('Ctrl+Shift+S', self, lambda:self.terminal.prompt('s '))
 
         if file_to_open:
             self.scene.open_file(file_to_open)
