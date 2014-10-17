@@ -33,7 +33,8 @@ class Terminal(GenericTerminal):
 
 
     def __init__(self, parent, get_filepath):
-        super().__init__(parent, GenericTerminalInputBox, GenericTerminalOutputBox)
+        super().__init__(parent, GenericTerminalInputBox,
+                         GenericTerminalOutputBox)
 
         self.get_filepath = get_filepath
 
@@ -101,7 +102,8 @@ class Terminal(GenericTerminal):
         dirpath, namepart = os.path.split(path)
         if not os.path.isdir(dirpath):
             return []
-        suggestions = [os.path.join(dirpath, p) for p in sorted(os.listdir(dirpath))
+        suggestions = [os.path.join(dirpath, p)
+                       for p in sorted(os.listdir(dirpath))
                        if p.lower().startswith(namepart.lower())]
         return [p + (os.path.sep*os.path.isdir(p)) for p in suggestions]
 
@@ -157,7 +159,8 @@ class Terminal(GenericTerminal):
         elif not rx.group(3):
             self.edit_cell.emit(int(rx.group(1)), int(rx.group(2)), '')
         else:
-            self.edit_cell.emit(int(rx.group(1)), int(rx.group(2)), rx.group(3).strip())
+            self.edit_cell.emit(int(rx.group(1)), int(rx.group(2)),
+                                rx.group(3).strip())
 
     def cmd_clear_cell(self, arg):
         rx = re.match(r'(\d+) +(\d+)$', arg)

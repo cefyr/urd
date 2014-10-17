@@ -41,7 +41,8 @@ class MainWindow(QtGui.QFrame):
         common.set_hotkey('Ctrl+N', self, self.scene.request_new_file)
         common.set_hotkey('Ctrl+O', self, lambda:self.terminal.prompt('o '))
         common.set_hotkey('Ctrl+S', self, self.scene.request_save_file)
-        common.set_hotkey('Ctrl+Shift+S', self, lambda:self.terminal.prompt('s '))
+        common.set_hotkey('Ctrl+Shift+S', self,
+                          lambda:self.terminal.prompt('s '))
 
         if file_to_open:
             self.scene.open_file(file_to_open)
@@ -99,7 +100,8 @@ class MainWindow(QtGui.QFrame):
 
 def read_config():
     config_file = os.path.join(os.getenv('HOME'), '.config', 'urd', 'urd.conf')
-    common.make_sure_config_exists(config_file, common.local_path('default_config.json'))
+    common.make_sure_config_exists(config_file,
+                                   common.local_path('default_config.json'))
     return common.read_json(config_file)
 
 
