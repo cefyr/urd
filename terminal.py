@@ -126,7 +126,7 @@ class Terminal(GenericTerminal):
             self.error('Add either plotline (p) or timeslot (t)')
 
     def cmd_insert(self, arg):
-        rx = re.match(r'([pt])(\d+) +(.+)', arg)
+        rx = re.match(r'([pt]) (\d+) +(.+)', arg)
         if not rx:
             self.error('Invalid insert command')
         elif rx.group(1) == 'p':
@@ -135,8 +135,8 @@ class Terminal(GenericTerminal):
             self.insert_timeslot.emit(int(rx.group(2)), rx.group(3))
 
     def cmd_move(self, arg):
-        rx = re.match(r'([pt])([1-9]\d*) *( +[1-9]\d*|\+|-)', arg)
-        rxc = re.match(r'c([1-9]\d*) +([1-9]\d*) +([1-9]\d*) +([1-9]\d*)', arg)
+        rx = re.match(r'([pt]) ([1-9]\d*) *( +[1-9]\d*|\+|-)', arg)
+        rxc = re.match(r'c ([1-9]\d*) +([1-9]\d*) +([1-9]\d*) +([1-9]\d*)', arg)
         if not rx and not rxc:
             self.error('Invalid move command')
         elif rx:
@@ -161,7 +161,7 @@ class Terminal(GenericTerminal):
             self.copy_cell.emit(*map(int, rxc.groups()))
 
     def cmd_remove(self, arg):
-        rx = re.match(r'([pt])(\d+)', arg)
+        rx = re.match(r'([pt]) (\d+)', arg)
         if not rx:
             self.error('Invalid remove command')
         elif rx.group(1) == 'p':
