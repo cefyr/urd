@@ -149,7 +149,7 @@ class Terminal(GenericTerminal):
 
     def cmd_copy(self, arg):
         rx = re.match(r'([pt]) ([1-9]\d*) *( +[1-9]\d*|\+|-)', arg)
-        rxc = re.match(r'c ([1-9]\d*) +([1-9]\d*) +([1-9]\d*) +([1-9]\d*)', arg)
+        rxc = re.match(r'([1-9]\d*) +([1-9]\d*) +([1-9]\d*) +([1-9]\d*)', arg)
         if not rx and not rxc:
             self.error('Invalid copy command')
         elif rx:
