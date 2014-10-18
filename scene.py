@@ -174,7 +174,6 @@ class Scene(QtGui.QWidget, FileHandler):
         self.set_cell(x, y, name)
         self.draw_scene()
 
-
     # ======== MOVE ==========================================================
     def move_plotline(self, oldpos, newpos):
         self._move(oldpos, newpos, 'p')
@@ -196,6 +195,31 @@ class Scene(QtGui.QWidget, FileHandler):
                 return
             self.add_undo('mc', (oldpos, newpos))
             self.grid.move_col(foldpos, fnewpos)
+        self.draw_scene()
+
+    # ======== COPY ==========================================================
+    def copy_plotline(self, oldpos, newpos):
+        self._copy(oldpos, newpos, 'p')
+
+    def copy_timeslot(self, oldpos, newpos):
+        self._copy(oldpos, newpos, 't')
+
+    def _copy(self, oldpos, newpos, arg):
+        foldpos, fnewpos = _fix_movepos(oldpos, newpos)
+        if self.do_row(arg):
+            if (0,oldpos) not in self.grid:
+                self.error('Invalid row')
+                return
+            #TODO self.add_undo('mr', (oldpos, newpos))
+            #self.grid.copy_row(foldpos, fnewpos)
+            self.error('Copy plotline/timeslot not yet implemented')
+        else:
+            if (oldpos,0) not in self.grid:
+                self.error('Invalid column')
+                return
+            # TODO self.add_undo('mc', (oldpos, newpos))
+            #self.grid.copy_col(foldpos, fnewpos)
+            self.error('Copy plotline/timeslot not yet implemented')
         self.draw_scene()
 
     # ======== REMOVE ========================================================
@@ -228,6 +252,14 @@ class Scene(QtGui.QWidget, FileHandler):
         self.add_undo('mi', ((x1, y1, self.grid[x1,y1]), (x2, y2, self.grid[x2,y2])))
         self.grid[x2,y2] = self.grid[x1,y1]
         self.grid[x1,y1] = None
+        self.draw_scene()
+
+    def copy_cell(self, x1, y1, x2, y2):
+        if not ((x1,y1) in self.grid and (x2,y2) in self.grid):
+            self.error('Invalid coordinates')
+            return
+        self.add_undo('mi', ((x1, y1, self.grid[x1,y1]), (x2, y2, self.grid[x2,y2])))
+        self.grid[x2,y2] = self.grid[x1,y1]
         self.draw_scene()
 
     def edit_cell(self, x, y, text):

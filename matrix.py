@@ -70,8 +70,16 @@ class Matrix():
 
     def move_col(self, oldpos, newpos):
         for n in range(len(self.data)):
-            x = self.data[n].pop(oldpos)
-            self.data[n].insert(newpos, x)
+            self.data[n].insert(newpos, oldpos)
+
+#TODO
+#    def copy_row(self, oldpos, newpos):
+#        self.data.insert(newpos, oldpos)
+#
+#    def copy_col(self, oldpos, newpos):
+#        for n in range(len(self.data)):
+#            x = self.data[n].pop(oldpos)
+#            self.data[n].insert(newpos, x)
 
     def row(self, pos):
         return self.data[pos]

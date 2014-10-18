@@ -20,9 +20,12 @@ class Terminal(GenericTerminal):
     insert_timeslot = pyqtSignal(int, str)
     move_plotline = pyqtSignal(int, str)
     move_timeslot = pyqtSignal(int, str)
+    copy_plotline = pyqtSignal(int, str)
+    copy_timeslot = pyqtSignal(int, str)
     remove_plotline = pyqtSignal(int)
     remove_timeslot = pyqtSignal(int)
     move_cell = pyqtSignal(int, int, int, int)
+    copy_cell = pyqtSignal(int, int, int, int)
     edit_cell = pyqtSignal(int, int, str)
     clear_cell = pyqtSignal(int, int)
 
@@ -44,6 +47,7 @@ class Terminal(GenericTerminal):
             'i': (self.cmd_insert, 'Insert plotline/timeslot (i[pt][POS] [NAME])'),
             'm': (self.cmd_move, 'Move plotline/timeslot (m[cpt][OLD] [NEW])'),
             'r': (self.cmd_remove, 'Remove plotline/timeslot (r[pt][POS])'),
+            'c': (self.cmd_copy, 'Copy cell/plotline/timeslot (c[cpt][OLD] [NEW])'),
             'e': (self.cmd_edit_cell, 'Edit cell (e[COL] [ROW] [TEXT])'),
             'd': (self.cmd_clear_cell, 'Clear cell (c[COL] [ROW])'),
             'u': (self.undo, 'Undo'),
@@ -142,6 +146,19 @@ class Terminal(GenericTerminal):
                 self.move_timeslot.emit(int(rx.group(2)), rx.group(3).strip())
         else:
             self.move_cell.emit(*map(int, rxc.groups()))
+
+    def cmd_copy(self, arg):
+        rx = re.match(r'([pt]) ([1-9]\d*) *( +[1-9]\d*|\+|-)', arg)
+        rxc = re.match(r'c ([1-9]\d*) +([1-9]\d*) +([1-9]\d*) +([1-9]\d*)', arg)
+        if not rx and not rxc:
+            self.error('Invalid copy command')
+        elif rx:
+            if rx.group(1) == 'p':
+                self.copy_plotline.emit(int(rx.group(2)), rx.group(3).strip())
+            elif rx.group(1) == 't':
+                self.copy_timeslot.emit(int(rx.group(2)), rx.group(3).strip())
+        else:
+            self.copy_cell.emit(*map(int, rxc.groups()))
 
     def cmd_remove(self, arg):
         rx = re.match(r'([pt])(\d+)', arg)
