@@ -45,7 +45,7 @@ class Terminal(GenericTerminal):
             'm': (self.cmd_move, 'Move plotline/timeslot (m[cpt][OLD] [NEW])'),
             'r': (self.cmd_remove, 'Remove plotline/timeslot (r[pt][POS])'),
             'e': (self.cmd_edit_cell, 'Edit cell (e[COL] [ROW] [TEXT])'),
-            'c': (self.cmd_clear_cell, 'Clear cell (c[COL] [ROW])'),
+            'd': (self.cmd_clear_cell, 'Clear cell (c[COL] [ROW])'),
             'u': (self.undo, 'Undo'),
             't': (self.set_time_orientation, 'Time orientation (t[hv])'),
             'o': (self.cmd_open, 'Open [file]'),
