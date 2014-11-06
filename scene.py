@@ -87,7 +87,7 @@ class Scene(QtGui.QWidget, FileHandler):
             else:
                 x, y = sum(col_widths[:n]) + size/2 - 5, row_heights[0]/2
                 w, h = 10, sum(row_heights)
-            painter.fillRect(border + x, border + y, w, h, QColor('black'))
+            painter.fillRect(border + x, border + y, w, h, QColor(self.theme['details']))
 
         # Draw cells
         painter.setPen(QColor(self.theme['cell border']))
