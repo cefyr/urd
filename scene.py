@@ -125,7 +125,8 @@ class Scene(QtGui.QWidget, FileHandler):
     def error(self, text):
         self.error_sig.emit(text)
 
-
+    # True if orientation is such that rows should be handled
+    # False if columns should be handled
     def do_row(self, arg):
         return (self.horizontal_time and arg == 'p') \
             or (not self.horizontal_time and arg == 't')
@@ -205,20 +206,28 @@ class Scene(QtGui.QWidget, FileHandler):
         self._copy(oldpos, newpos, 't')
 
     def _copy(self, oldpos, newpos, arg):
-        foldpos, fnewpos = _fix_movepos(oldpos, newpos)
+#        foldpos, fnewpos = _fix_movepos(oldpos, newpos)
         if self.do_row(arg):
             if (0,oldpos) not in self.grid:
                 self.error('Invalid row')
                 return
-            #TODO self.add_undo('mr', (oldpos, newpos))
-            #self.grid.copy_row(foldpos, fnewpos)
+            if (0,newpos) not in self.grid:
+                fnewpos = -1
+                #self.add_undo('ir', -1)
+            else:
+                #self.add_undo('rr', (newpos, self.grid.row(newpos))
+            #TODO self.grid.copy_row(oldpos, newpos)
             self.error('Copy plotline/timeslot not yet implemented')
         else:
             if (oldpos,0) not in self.grid:
                 self.error('Invalid column')
                 return
-            # TODO self.add_undo('mc', (oldpos, newpos))
-            #self.grid.copy_col(foldpos, fnewpos)
+            if (0,newpos) not in self.grid:
+                fnewpos = -1
+                #self.add_undo('ic', -1)
+            else:
+                #self.add_undo('rc', (newpos, self.grid.col(newpos))
+            #TODO self.grid.copy_col(foldpos, fnewpos)
             self.error('Copy plotline/timeslot not yet implemented')
         self.draw_scene()
 
@@ -249,6 +258,7 @@ class Scene(QtGui.QWidget, FileHandler):
         if not ((x1,y1) in self.grid and (x2,y2) in self.grid):
             self.error('Invalid coordinates')
             return
+        #TODO Add prompt for overwrite?
         self.add_undo('mi', ((x1, y1, self.grid[x1,y1]), (x2, y2, self.grid[x2,y2])))
         self.grid[x2,y2] = self.grid[x1,y1]
         self.grid[x1,y1] = None
@@ -258,7 +268,8 @@ class Scene(QtGui.QWidget, FileHandler):
         if not ((x1,y1) in self.grid and (x2,y2) in self.grid):
             self.error('Invalid coordinates')
             return
-        self.add_undo('mi', ((x1, y1, self.grid[x1,y1]), (x2, y2, self.grid[x2,y2])))
+        #TODO Add prompt for overwrite?
+        self.add_undo('e', (x2, y2, self.grid[x2,y2]))
         self.grid[x2,y2] = self.grid[x1,y1]
         self.draw_scene()
 
@@ -304,9 +315,11 @@ class Scene(QtGui.QWidget, FileHandler):
             self.error('Nothing to undo')
             return
         cmd, arg = self.undo_stack.pop()
+        # Edit
         if cmd == 'e':
             x, y, item = arg
             self.grid[x,y] = item
+        # Move
         elif cmd[0] == 'm':
             if cmd[1] == 'r':
                 old, new = _fix_movepos(*arg)
@@ -320,11 +333,13 @@ class Scene(QtGui.QWidget, FileHandler):
                 x2, y2, item2 = newcell
                 self.grid[x1,y1] = item1
                 self.grid[x2,y2] = item2
+        # Insert
         elif cmd[0] == 'i':
             if cmd[1] == 'r':
                 self.grid.remove_row(arg)
             else:
                 self.grid.remove_col(arg)
+        # Remove
         elif cmd[0] == 'r':
             pos, arr = arg
             if cmd[1] == 'r':
@@ -335,6 +350,7 @@ class Scene(QtGui.QWidget, FileHandler):
                 self.grid.add_col(pos)
                 for n, item in enumerate(arr):
                     self.grid[pos,n] = item
+        # Flip orientation
         elif cmd == 'flip':
             self.grid.flip_orientation()
             self.horizontal_time = not self.horizontal_time
