@@ -72,10 +72,9 @@ class Matrix():
         for n in range(len(self.data)):
             self.data[n].insert(newpos, oldpos)
 
-#TODO
-#    def copy_row(self, oldpos, newpos):
-#        self.data.insert(newpos, oldpos)
-#
+    def copy_row(self, oldpos, newpos):
+        self.data.insert(newpos, self.data[oldpos])
+
 #    def copy_col(self, oldpos, newpos):
 #        for n in range(len(self.data)):
 #            x = self.data[n].pop(oldpos)

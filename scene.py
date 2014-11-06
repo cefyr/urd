@@ -164,6 +164,7 @@ class Scene(QtGui.QWidget, FileHandler):
                 return
             self.grid.add_row(pos)
             x, y = 0, pos
+            print('insert position type ', type(pos))
             self.add_undo('ir', pos)
         else:
             if pos != -1 and (pos-1,0) not in self.grid:
@@ -206,18 +207,13 @@ class Scene(QtGui.QWidget, FileHandler):
         self._copy(oldpos, newpos, 't')
 
     def _copy(self, oldpos, newpos, arg):
-#        foldpos, fnewpos = _fix_movepos(oldpos, newpos)
+        foldpos, fnewpos = _fix_movepos(oldpos, newpos)
         if self.do_row(arg):
             if (0,oldpos) not in self.grid:
                 self.error('Invalid row')
                 return
-            if (0,newpos) not in self.grid:
-                fnewpos = -1
-                #self.add_undo('ir', -1)
-            else:
-                #self.add_undo('rr', (newpos, self.grid.row(newpos))
-            #TODO self.grid.copy_row(oldpos, newpos)
-            self.error('Copy plotline/timeslot not yet implemented')
+            self.add_undo('ir', int(newpos))
+            self.grid.copy_row(foldpos, fnewpos)
         else:
             if (oldpos,0) not in self.grid:
                 self.error('Invalid column')
@@ -226,7 +222,8 @@ class Scene(QtGui.QWidget, FileHandler):
                 fnewpos = -1
                 #self.add_undo('ic', -1)
             else:
-                #self.add_undo('rc', (newpos, self.grid.col(newpos))
+                #self.add_undo('rc', (newpos, self.grid.col(newpos)))
+                pass
             #TODO self.grid.copy_col(foldpos, fnewpos)
             self.error('Copy plotline/timeslot not yet implemented')
         self.draw_scene()
