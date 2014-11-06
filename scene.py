@@ -125,6 +125,9 @@ class Scene(QtGui.QWidget, FileHandler):
     def error(self, text):
         self.error_sig.emit(text)
 
+    def print_out(self, text):
+        self.print_.emit(text)
+
     # True if orientation is such that rows should be handled
     # False if columns should be handled
     def do_row(self, arg):
@@ -164,7 +167,6 @@ class Scene(QtGui.QWidget, FileHandler):
                 return
             self.grid.add_row(pos)
             x, y = 0, pos
-            print('insert position type ', type(pos))
             self.add_undo('ir', pos)
         else:
             if pos != -1 and (pos-1,0) not in self.grid:
@@ -255,7 +257,8 @@ class Scene(QtGui.QWidget, FileHandler):
         if not ((x1,y1) in self.grid and (x2,y2) in self.grid):
             self.error('Invalid coordinates')
             return
-        #TODO Add prompt for overwrite?
+        if not self.grid[x2,y2][0] == '':
+            print_out('Warning: Text overwritten') #TODO Switch to output instead
         self.add_undo('mi', ((x1, y1, self.grid[x1,y1]), (x2, y2, self.grid[x2,y2])))
         self.grid[x2,y2] = self.grid[x1,y1]
         self.grid[x1,y1] = None
@@ -265,7 +268,8 @@ class Scene(QtGui.QWidget, FileHandler):
         if not ((x1,y1) in self.grid and (x2,y2) in self.grid):
             self.error('Invalid coordinates')
             return
-        #TODO Add prompt for overwrite?
+        if not self.grid[x2,y2][0] == '':
+            self.print_out('Warning: Text overwritten') #TODO Switch to output instead
         self.add_undo('e', (x2, y2, self.grid[x2,y2]))
         self.grid[x2,y2] = self.grid[x1,y1]
         self.draw_scene()
