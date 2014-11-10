@@ -49,6 +49,7 @@ class Scene(QtGui.QWidget, FileHandler):
     def draw_scene(self):
         border = self.theme['border']
         row_padding, col_padding = 20, 20
+        #TODO Ficz this so it doesn't say int is not subscriptable
         row_heights = [max([x[1][1] for x in self.grid.row(row) if x[0]] + [0]) + row_padding
                        for row in range(self.grid.count_rows())]
         col_widths = [max([x[1][0] for x in self.grid.col(col) if x[0]] + [0]) + col_padding
@@ -222,12 +223,9 @@ class Scene(QtGui.QWidget, FileHandler):
                 return
             if (0,newpos) not in self.grid:
                 fnewpos = -1
-                #self.add_undo('ic', -1)
-            else:
-                #self.add_undo('rc', (newpos, self.grid.col(newpos)))
-                pass
-            #TODO self.grid.copy_col(foldpos, fnewpos)
-            self.error('Copy plotline/timeslot not yet implemented')
+            self.add_undo('ic', int(newpos))
+            self.grid.copy_col(foldpos, fnewpos)
+            #self.error('Copy plotline/timeslot not yet implemented')
         self.draw_scene()
 
     # ======== REMOVE ========================================================
