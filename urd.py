@@ -23,21 +23,22 @@ class MainWindow(QtGui.QFrame):
         layout = QtGui.QVBoxLayout(self)
         common.kill_theming(layout)
 
-        scene_container = QtGui.QScrollArea(self)
-        layout.addWidget(scene_container, stretch=1)
+        self.scene_container = QtGui.QScrollArea(self)
+        layout.addWidget(self.scene_container, stretch=1)
 
         self.scene = Scene(self.config,
-                scene_container.horizontalScrollBar().value,
-                scene_container.verticalScrollBar().value)
+                self.scene_container.horizontalScrollBar().value,
+                self.scene_container.verticalScrollBar().value)
 
-        scene_container.setWidget(self.scene)
+        self.scene_container.setWidget(self.scene)
+        self.scene_container.setDisabled(True)
 
         self.terminal = Terminal(self, lambda: self.scene.file_path)
         layout.addWidget(self.terminal)
 
         self.connect_signals(self.scene, self.terminal)
 
-        common.set_hotkey('Escape', self, self.terminal.toggle)
+#        common.set_hotkey('Escape', self, self.terminal.toggle)
         common.set_hotkey('Ctrl+N', self, self.scene.request_new_file)
         common.set_hotkey('Ctrl+O', self, lambda:self.terminal.prompt('o '))
         common.set_hotkey('Ctrl+S', self, self.scene.request_save_file)
@@ -90,6 +91,7 @@ class MainWindow(QtGui.QFrame):
             (scene.error_sig, term.error),
             (scene.print_, term.print_),
             (term.give_up_focus, scene.setFocus),
+            (term.input_term.scroll_index, self.scene_container.event),
 
             # File operations
             (term.request_new_file, scene.request_new_file),

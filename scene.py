@@ -35,6 +35,8 @@ class Scene(QtGui.QWidget, FileHandler):
         self.font_data = {'def': (font, QtGui.QFontMetrics(font)),
                           'bold': (boldfont, QtGui.QFontMetrics(boldfont))}
 
+        self.setDisabled(True)
+
         self.draw_scene()
 
 

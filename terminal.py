@@ -3,9 +3,27 @@ import os.path
 import re
 
 from PyQt4 import QtGui
-from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSignal, Qt, QEvent
 
 from libsyntyche.terminal import GenericTerminalInputBox, GenericTerminalOutputBox, GenericTerminal
+
+
+class TerminalInputBox(GenericTerminalInputBox):
+    scroll_index = pyqtSignal(QtGui.QKeyEvent)
+
+    def keyPressEvent(self, event):
+        if event.modifiers() == Qt.ControlModifier and event.key() in (Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right):
+            nev = QtGui.QKeyEvent(QEvent.KeyPress, event.key(), Qt.NoModifier)
+            self.scroll_index.emit(nev)
+        else:
+            return super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if event.modifiers() == Qt.ControlModifier and event.key() in (Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right):
+            nev = QtGui.QKeyEvent(QEvent.KeyRelease, event.key(), Qt.NoModifier)
+            self.scroll_index.emit(nev)
+        else:
+            return super().keyReleaseEvent(event)
 
 
 class Terminal(GenericTerminal):
@@ -36,7 +54,7 @@ class Terminal(GenericTerminal):
 
 
     def __init__(self, parent, get_filepath):
-        super().__init__(parent, GenericTerminalInputBox,
+        super().__init__(parent, TerminalInputBox,
                          GenericTerminalOutputBox)
 
         self.get_filepath = get_filepath
@@ -57,19 +75,6 @@ class Terminal(GenericTerminal):
             's': (self.cmd_save, 'Save (as) [file]'),
             'q': (self.cmd_quit, 'Quit')
         }
-
-        self.hide()
-
-    def show(self):
-        super().show()
-        self.input_term.setFocus()
-
-    def toggle(self):
-        if self.input_term.hasFocus():
-            self.give_up_focus.emit()
-            self.hide()
-        else:
-            self.show()
 
 
     # ==== Autocomplete ========================== #
