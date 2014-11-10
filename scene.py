@@ -194,13 +194,13 @@ class Scene(QtGui.QWidget, FileHandler):
             if (0,oldpos) not in self.grid:
                 self.error('Invalid row')
                 return
-            self.add_undo('mr', (oldpos, newpos))
+            self.add_undo('mr', (foldpos, fnewpos))
             self.grid.move_row(foldpos, fnewpos)
         else:
             if (oldpos,0) not in self.grid:
                 self.error('Invalid column')
                 return
-            self.add_undo('mc', (oldpos, newpos))
+            self.add_undo('mc', (foldpos, fnewpos))
             self.grid.move_col(foldpos, fnewpos)
         self.draw_scene()
 
@@ -217,17 +217,16 @@ class Scene(QtGui.QWidget, FileHandler):
             if (0,oldpos) not in self.grid:
                 self.error('Invalid row')
                 return
-            self.add_undo('ir', int(newpos))
+            self.add_undo('ir', fnewpos)
             self.grid.copy_row(foldpos, fnewpos)
         else:
             if (oldpos,0) not in self.grid:
                 self.error('Invalid column')
                 return
-            if (0,newpos) not in self.grid:
+            if (0,fnewpos) not in self.grid:
                 fnewpos = -1
-            self.add_undo('ic', int(newpos))
+            self.add_undo('ic', fnewpos)
             self.grid.copy_col(foldpos, fnewpos)
-            #self.error('Copy plotline/timeslot not yet implemented')
         self.draw_scene()
 
     # ======== REMOVE ========================================================
