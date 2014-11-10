@@ -73,12 +73,12 @@ class Matrix():
             self.data[n].insert(newpos, oldpos)
 
     def copy_row(self, oldpos, newpos):
-        self.data.insert(newpos, self.data[oldpos])
+        row = self.data[oldpos].copy()
+        self.data.insert(newpos, row)
 
     def copy_col(self, oldpos, newpos):
         for n in range(len(self.data)):
             if newpos == -1:
-                print('newpos == -1')
                 self.data[n].append(self.data[n][oldpos])
             else:
                 self.data[n].insert(newpos, self.data[n][oldpos])
