@@ -1,6 +1,9 @@
 *.py[cod]
 *.swp
 
+# Files to test on
+*.csv
+
 # C extensions
 *.so
 
