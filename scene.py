@@ -53,7 +53,6 @@ class Scene(QtGui.QWidget, FileHandler):
     def draw_scene(self):
         border = self.theme['border']
         row_padding, col_padding = 20, 20
-        #TODO Ficz this so it doesn't say int is not subscriptable
         row_heights = [max([x[1][1] for x in self.grid.row(row) if x[0]] + [0]) + row_padding
                        for row in range(self.grid.count_rows())]
         col_widths = [max([x[1][0] for x in self.grid.col(col) if x[0]] + [0]) + col_padding
@@ -262,7 +261,7 @@ class Scene(QtGui.QWidget, FileHandler):
             print_out('Warning: Text overwritten') #TODO Switch to output instead
         self.add_undo('mi', ((x1, y1, self.grid[x1,y1]), (x2, y2, self.grid[x2,y2])))
         self.grid[x2,y2] = self.grid[x1,y1]
-        self.grid[x1,y1] = None
+        self.grid[x1,y1] = default_item()
         self.draw_scene()
 
     def copy_cell(self, x1, y1, x2, y2):
@@ -291,7 +290,7 @@ class Scene(QtGui.QWidget, FileHandler):
             self.error('Invalid coordinate')
             return
         self.add_undo('e', (x, y, self.grid[x,y]))
-        self.grid[x,y] = None
+        self.grid[x,y] = default_item()
         self.draw_scene()
 
     def set_cell(self, x, y, name):
