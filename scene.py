@@ -279,7 +279,7 @@ class Scene(QtGui.QWidget, FileHandler):
             self.error('Invalid coordinate')
             return
         if not text:
-            self.prompt('e{} {} {}'.format(x, y, self.grid[x,y][0]))
+            self.prompt('e {} {} {}'.format(x, y, self.grid[x,y][0]))
             return
         self.add_undo('e', (x, y, self.grid[x,y]))
         self.set_cell(x, y, text)
